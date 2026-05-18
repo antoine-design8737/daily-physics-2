@@ -3,91 +3,73 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Daily Physics — Auth Works</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>Daily Physics — Cross‑device sync</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1a1a24;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#f0efe8;--muted:#6a6a7a;--muted2:#9a9aaa;--accent:#c8b8f5;--accent-dim:rgba(200,184,245,0.12);--like:#f5829a;--like-dim:rgba(245,130,154,0.12);--serif:'DM Serif Display',serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;--nav-h:64px}
+:root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1a1a24;--border:rgba(255,255,255,0.07);--text:#f0efe8;--muted:#6a6a7a;--accent:#c8b8f5;--like:#f5829a;--serif:'DM Serif Display',serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100dvh}
-#app{padding-bottom:calc(var(--nav-h) + 20px)}
-#nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:rgba(13,13,20,0.94);backdrop-filter:blur(18px);border-top:1px solid rgba(255,255,255,0.1);display:flex;z-index:100}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;cursor:pointer;color:var(--muted)}
+#app{max-width:520px;margin:0 auto;padding:20px 20px 80px}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#13131ad9;backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-around;padding:8px 0;z-index:100}
+.nav-btn{background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-family:var(--sans)}
 .nav-btn.active{color:var(--accent)}
-.nav-btn svg{width:22px;height:22px}
-.page{display:none;padding:20px;max-width:520px;margin:0 auto}
+.page{display:none}
 .page.active{display:block}
-.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-.logo{font-family:var(--serif);font-size:20px;display:flex;align-items:center;gap:8px}
-.logo-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 3s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.date-chip{font-family:var(--mono);font-size:11px;background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:5px 12px;display:flex;align-items:center;gap:8px}
-.cat-scroll{display:flex;gap:10px;overflow-x:auto;margin-bottom:24px}
-.cat-btn{font-size:12px;background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:6px 15px;cursor:pointer;white-space:nowrap}
-.cat-btn.active{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
-.paper-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:22px}
-.badge{font-family:var(--mono);font-size:10px;color:var(--accent);background:var(--accent-dim);border-radius:40px;padding:3px 10px;display:inline-block}
-.paper-title{font-family:var(--serif);font-size:22px;margin:12px 0 8px}
-.paper-authors{font-size:13px;color:var(--muted);margin-bottom:16px}
-.paper-abstract{font-size:13.5px;line-height:1.6;margin-bottom:20px}
-.action-row{display:flex;gap:12px;margin-bottom:16px}
-.btn-read{flex:1;background:var(--accent-dim);border-radius:14px;padding:10px;text-align:center;color:var(--accent);text-decoration:none;font-weight:600}
-.btn-like{width:48px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;cursor:pointer;font-size:20px}
-.btn-like.liked{color:var(--like);border-color:rgba(245,130,154,0.4)}
-.refresh-row{display:flex;justify-content:center;margin-top:20px}
-.btn-refresh{background:transparent;border:1px solid var(--border);border-radius:40px;padding:8px 20px;color:var(--muted);cursor:pointer}
-.mini-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:10px;cursor:pointer}
-.mini-title{font-family:var(--serif);font-size:15px}
-.mini-like{background:none;border:none;cursor:pointer;font-size:14px}
-.state-loading{text-align:center;padding:40px;color:var(--muted)}
-.spinner{width:28px;height:28px;border:2px solid rgba(255,255,255,0.1);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:20px;margin-top:16px}
+.btn{background:var(--accent);border:none;border-radius:40px;padding:10px 20px;color:#0a0a0f;font-weight:600;cursor:pointer}
+.btn-outline{background:transparent;border:1px solid var(--accent);color:var(--accent)}
+input,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;color:white;width:100%;margin-bottom:12px;font-family:var(--sans)}
+.auth-box{background:var(--surface);border-radius:24px;padding:24px;max-width:360px;margin:40px auto}
+.error{background:#ff444410;border:1px solid #ff4444;border-radius:12px;padding:10px;color:#ff8888;margin-top:12px;display:none}
+.spinner{width:28px;height:28px;border:2px solid rgba(255,255,255,0.1);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:20px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
-#auth-wall{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
-.auth-box{background:var(--surface);border-radius:24px;padding:28px;max-width:360px;width:100%}
-.auth-field{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;color:white}
-.auth-btn{width:100%;padding:12px;background:var(--accent-dim);border:none;border-radius:12px;color:var(--accent);font-weight:600;cursor:pointer;margin-top:8px}
-.auth-btn-secondary{background:var(--surface2);color:var(--text)}
-.auth-err{font-size:12px;color:#ff8888;background:#2a1a1a;padding:8px;border-radius:8px;margin-top:12px;display:none}
-.auth-tabs{display:flex;gap:8px;margin-bottom:20px}
-.auth-tab{flex:1;background:var(--surface2);border:none;border-radius:12px;padding:8px;color:var(--muted);cursor:pointer}
-.auth-tab.active{background:var(--accent-dim);color:var(--accent)}
+.badge{background:var(--accent);color:#0a0a0f;padding:2px 8px;border-radius:40px;font-size:12px;font-weight:bold}
+.liked-btn{background:#1a1a24;border:1px solid #2a2a35;border-radius:40px;width:48px;cursor:pointer;font-size:20px}
+.liked-btn.liked{color:var(--like);border-color:rgba(245,130,154,0.4)}
+.mini-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer}
+.mini-title{font-family:var(--serif);font-size:15px}
+hr{border-color:var(--border);margin:16px 0}
 </style>
 </head>
 <body>
 <div id="app">
   <div class="page active" id="page-today">
-    <div class="page-header"><div class="logo"><span class="logo-dot"></span>Daily Physics</div><div class="date-chip" id="user-info"></div></div>
-    <div class="cat-scroll" id="cat-scroll"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h1 style="font-family:var(--serif)">Daily Physics</h1>
+      <div id="user-badge" style="font-size:12px;background:var(--surface2);padding:4px 12px;border-radius:40px"></div>
+    </div>
+    <div id="cat-bar" style="display:flex;gap:8px;overflow-x:auto;margin:16px 0"></div>
     <div id="today-content"></div>
   </div>
-  <div class="page" id="page-liked"><div class="page-header"><div class="page-title">Liked</div><button class="btn-refresh" id="clear-liked">Clear</button></div><div id="liked-list"></div></div>
-  <div class="page" id="page-history"><div class="page-header"><div class="page-title">History</div></div><div id="history-list"></div></div>
-  <div class="page" id="page-rec"><div class="page-header"><div class="page-title">For You</div></div><div id="rec-content"></div></div>
+  <div class="page" id="page-liked"><h2>Liked papers</h2><div id="liked-list"></div></div>
+  <div class="page" id="page-history"><h2>History</h2><div id="history-list"></div></div>
+  <div class="nav">
+    <button class="nav-btn active" data-page="today">📄 Today</button>
+    <button class="nav-btn" data-page="liked">❤️ Liked</button>
+    <button class="nav-btn" data-page="history">📜 History</button>
+  </div>
 </div>
-<nav id="nav">
-  <button class="nav-btn active" data-page="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="22" height="22"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Today</span></button>
-  <button class="nav-btn" data-page="liked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="22" height="22"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>Liked</span></button>
-  <button class="nav-btn" data-page="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="22" height="22"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg><span>History</span></button>
-  <button class="nav-btn" data-page="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="22" height="22"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>For You</span></button>
-</nav>
 
-<div id="auth-wall">
+<!-- Auth wall -->
+<div id="auth-wall" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#0a0a0f;display:flex;align-items:center;justify-content:center;z-index:200">
   <div class="auth-box">
-    <div class="logo" style="justify-content:center;margin-bottom:16px"><span class="logo-dot"></span>Daily Physics</div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login">Log in</button>
-      <button class="auth-tab" id="tab-signup">Sign up</button>
+    <h2 style="text-align:center">Daily Physics</h2>
+    <div style="display:flex;gap:10px;margin:20px 0">
+      <button id="tab-login" style="flex:1;background:var(--accent);border:none;border-radius:12px;padding:8px">Log in</button>
+      <button id="tab-signup" style="flex:1;background:var(--surface2);border:none;border-radius:12px;padding:8px">Sign up</button>
     </div>
-    <input class="auth-field" id="email" type="email" placeholder="Email">
-    <input class="auth-field" id="password" type="password" placeholder="Password">
-    <button class="auth-btn" id="submit-auth">Log in</button>
-    <button class="auth-btn auth-btn-secondary" id="anonymous-auth">🚀 Anonymous</button>
-    <div class="auth-err" id="auth-error"></div>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button id="submit-auth" class="btn" style="width:100%;margin-top:8px">Log in</button>
+    <button id="anonymous-auth" class="btn btn-outline" style="width:100%;margin-top:8px">🚀 Anonymous</button>
+    <div id="auth-error" class="error"></div>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBhSfk39qU3YlBA4etrNC_AvxUNxR15sDA",
@@ -97,45 +79,77 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
+enableIndexedDbPersistence(db).catch(e => console.warn("Offline persistence:", e));
 
 let currentUser = null;
 let liked = [];
 let history = [];
 let currentPaper = null;
 let activeCat = null;
+let unsubFirestore = null;
 
-// localStorage helpers
-function loadStorage() {
-  if (!currentUser) return;
-  const likedKey = `liked_${currentUser.uid}`;
-  const historyKey = `history_${currentUser.uid}`;
-  liked = JSON.parse(localStorage.getItem(likedKey) || '[]');
-  history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+// ---------- Firestore sync ----------
+async function syncUserData(userId) {
+  const userRef = doc(db, 'users', userId);
+  // Real-time listener
+  if (unsubFirestore) unsubFirestore();
+  unsubFirestore = onSnapshot(userRef, (snap) => {
+    if (snap.exists()) {
+      const data = snap.data();
+      liked = data.liked || [];
+      history = data.history || [];
+    } else {
+      liked = [];
+      history = [];
+    }
+    // Update UI after every sync
+    renderLiked();
+    renderHistory();
+    if (currentPaper) updateTodayLikeButton();
+    updateBadge();
+  }, (err) => console.warn("Firestore sync error:", err));
 }
-function saveStorage() {
+
+async function saveToFirestore() {
   if (!currentUser) return;
-  localStorage.setItem(`liked_${currentUser.uid}`, JSON.stringify(liked));
-  localStorage.setItem(`history_${currentUser.uid}`, JSON.stringify(history));
-  updateBadge();
+  const userRef = doc(db, 'users', currentUser.uid);
+  await setDoc(userRef, { liked, history }, { merge: true });
 }
-function updateBadge() { /* optional */ }
-function isLiked(id) { return liked.some(p => p.id === id); }
+
+function addToHistory(paper) {
+  const today = new Date().toISOString().slice(0,10);
+  history = history.filter(h => !(h.date === today && h.paper.id === paper.id));
+  history.unshift({ date: today, paper });
+  if (history.length > 200) history = history.slice(0,200);
+  saveToFirestore();
+}
+
 function toggleLike(paper) {
-  if (isLiked(paper.id)) liked = liked.filter(p => p.id !== paper.id);
-  else liked.unshift(paper);
-  saveStorage();
-  renderLiked();
-  renderHistory();
-  if (currentPaper && currentPaper.id === paper.id) {
-    const btn = document.getElementById('like-btn');
-    if (btn) { btn.classList.toggle('liked', isLiked(paper.id)); btn.textContent = isLiked(paper.id) ? '❤️' : '♡'; }
+  if (liked.some(p => p.id === paper.id)) {
+    liked = liked.filter(p => p.id !== paper.id);
+  } else {
+    liked.unshift(paper);
+    if (liked.length > 200) liked = liked.slice(0,200);
+  }
+  saveToFirestore();
+}
+
+// UI helpers
+function updateBadge() { /* optional */ }
+function updateTodayLikeButton() {
+  const btn = document.getElementById('like-today');
+  if (btn && currentPaper) {
+    const isLiked = liked.some(p => p.id === currentPaper.id);
+    btn.classList.toggle('liked', isLiked);
+    btn.textContent = isLiked ? '❤️' : '♡';
   }
 }
 
-// Auth UI
+// ---------- Auth UI ----------
 const wall = document.getElementById('auth-wall');
-const emailInput = document.getElementById('email');
-const passInput = document.getElementById('password');
+const emailInp = document.getElementById('email');
+const passInp = document.getElementById('password');
 const submitBtn = document.getElementById('submit-auth');
 const anonBtn = document.getElementById('anonymous-auth');
 const errorDiv = document.getElementById('auth-error');
@@ -143,13 +157,13 @@ const tabLogin = document.getElementById('tab-login');
 const tabSignup = document.getElementById('tab-signup');
 let authMode = 'login';
 
-tabLogin.onclick = () => { authMode = 'login'; tabLogin.classList.add('active'); tabSignup.classList.remove('active'); submitBtn.textContent = 'Log in'; errorDiv.style.display = 'none'; };
-tabSignup.onclick = () => { authMode = 'signup'; tabSignup.classList.add('active'); tabLogin.classList.remove('active'); submitBtn.textContent = 'Sign up'; errorDiv.style.display = 'none'; };
+tabLogin.onclick = () => { authMode = 'login'; tabLogin.style.background = 'var(--accent)'; tabSignup.style.background = 'var(--surface2)'; submitBtn.textContent = 'Log in'; errorDiv.style.display = 'none'; };
+tabSignup.onclick = () => { authMode = 'signup'; tabSignup.style.background = 'var(--accent)'; tabLogin.style.background = 'var(--surface2)'; submitBtn.textContent = 'Sign up'; errorDiv.style.display = 'none'; };
 
 async function handleAuth() {
-  const email = emailInput.value.trim();
-  const password = passInput.value;
-  if (!email || !password) { showError('Please fill both fields'); return; }
+  const email = emailInp.value.trim();
+  const password = passInp.value;
+  if (!email || !password) { showError('Email and password required'); return; }
   submitBtn.disabled = true; submitBtn.textContent = '...';
   try {
     if (authMode === 'signup') await createUserWithEmailAndPassword(auth, email, password);
@@ -158,154 +172,160 @@ async function handleAuth() {
 }
 async function handleAnonymous() {
   anonBtn.disabled = true; anonBtn.textContent = '...';
-  try { await signInAnonymously(auth); } catch (err) { showError(friendlyError(err.code)); anonBtn.disabled = false; anonBtn.textContent = 'Anonymous'; }
+  try { await signInAnonymously(auth); } catch (err) { showError(friendlyError(err.code)); anonBtn.disabled = false; anonBtn.textContent = '🚀 Anonymous'; }
 }
 function showError(msg) { errorDiv.textContent = msg; errorDiv.style.display = 'block'; }
 function friendlyError(code) {
-  const map = { 'auth/email-already-in-use':'Email already used','auth/invalid-email':'Invalid email','auth/weak-password':'Password min 6 chars','auth/user-not-found':'No account','auth/wrong-password':'Wrong password','auth/operation-not-allowed':'Enable Email/Password in Firebase console','auth/unauthorized-domain':'Add this domain to Firebase authorized domains' };
+  const map = {
+    'auth/email-already-in-use':'Email already used','auth/invalid-email':'Invalid email','auth/weak-password':'Password min 6 chars',
+    'auth/user-not-found':'No account','auth/wrong-password':'Wrong password','auth/operation-not-allowed':'Enable Email/Password in Firebase Console',
+    'auth/unauthorized-domain':'Add your GitHub Pages domain to Firebase → Authentication → Authorized domains'
+  };
   return map[code] || code;
 }
 submitBtn.onclick = handleAuth;
 anonBtn.onclick = handleAnonymous;
-[emailInput, passInput].forEach(f => f.addEventListener('keypress', e => { if (e.key === 'Enter') handleAuth(); }));
+[emailInp, passInp].forEach(f => f.addEventListener('keypress', e => { if (e.key === 'Enter') handleAuth(); }));
 
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async user => {
   if (!user) return;
   currentUser = user;
-  loadStorage();
+  await syncUserData(user.uid);
   wall.style.display = 'none';
-  document.getElementById('user-info').innerHTML = `<span>${user.isAnonymous ? 'Anonymous' : user.email}</span><button class="btn-refresh" id="signout-btn" style="padding:2px 8px">Sign out</button>`;
-  document.getElementById('signout-btn').onclick = async () => { await signOut(auth); location.reload(); };
+  const badge = document.getElementById('user-badge');
+  badge.innerHTML = `${user.isAnonymous ? 'Anonymous' : user.email} <button id="signout" style="background:none;border:1px solid #6a6a7a;border-radius:40px;padding:2px 8px;margin-left:8px;cursor:pointer">Sign out</button>`;
+  document.getElementById('signout').onclick = async () => { await signOut(auth); location.reload(); };
   bootApp();
 });
 
-// OpenAlex
+// ---------- OpenAlex ----------
 async function fetchOpenAlex(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
-function parseWork(work, cat) {
+function parseWork(work, catLabel) {
   const title = work.title || 'Untitled';
   let abstract = '';
   if (work.abstract_inverted_index) {
     const words = Object.entries(work.abstract_inverted_index).sort((a,b)=>a[1][0]-b[1][0]);
-    abstract = words.map(([w]) => w).join(' ');
+    abstract = words.map(([w]) => w).join(' ').slice(0,600);
   }
   const authors = (work.authorships || []).map(a => a.author.display_name).join(', ');
   const id = work.doi ? work.doi.replace('https://doi.org/','') : work.id.split('/').pop();
   let url = work.doi || work.id;
   const arxiv = work.primary_location?.landing_page_url?.match(/arxiv\.org\/abs\/([\d.]+)/)?.[1];
   if (arxiv) url = `https://arxiv.org/abs/${arxiv}`;
-  return { id, title, summary: abstract.slice(0,600), authors, cat, pub: work.publication_date?.slice(0,10) || '', url };
+  return { id, title, summary: abstract, authors, cat: catLabel, pub: work.publication_date?.slice(0,10) || '', url };
 }
 const CATEGORIES = [
   { id:'quantum', label:'Quantum', query:'quantum mechanics OR quantum computing', keywords:['quantum','qubit'] },
   { id:'astro', label:'Astro', query:'astrophysics OR cosmology', keywords:['galaxy','cosmos'] },
-  { id:'gravity', label:'Gravity', query:'general relativity OR black hole', keywords:['general relativity','black hole'] }
+  { id:'gravity', label:'Gravity', query:'general relativity OR black hole', keywords:['general relativity','black hole'] },
+  { id:'condmat', label:'CondMat', query:'superconductivity OR graphene', keywords:['superconduct','graphene'] },
+  { id:'hep', label:'Particle', query:'particle physics OR collider', keywords:['collider','neutrino','higgs'] }
 ];
-async function fetchPaper(cat, attempt=0) {
-  const page = Math.floor(Math.random()*50)+1;
-  const url = `https://api.openalex.org/works?search=${encodeURIComponent(cat.query)}&filter=open_access.is_oa:true&page=${page}&per-page=20`;
+async function fetchPaper(category, attempt=0) {
+  const page = Math.floor(Math.random()*80)+1;
+  const url = `https://api.openalex.org/works?search=${encodeURIComponent(category.query)}&filter=open_access.is_oa:true&sort=relevance_score:desc&page=${page}&per-page=20`;
   const data = await fetchOpenAlex(url);
   if (!data.results?.length) throw new Error('No papers');
-  const candidates = data.results.map(w => parseWork(w, cat.label)).filter(p => cat.keywords.some(k => p.title.toLowerCase().includes(k)));
+  const candidates = data.results.map(w => parseWork(w, category.label)).filter(p => category.keywords.some(k => p.title.toLowerCase().includes(k)));
   if (candidates.length) return candidates[Math.floor(Math.random()*candidates.length)];
-  if (attempt<3) return fetchPaper(cat, attempt+1);
-  return parseWork(data.results[0], cat.label);
+  if (attempt<3) return fetchPaper(category, attempt+1);
+  return parseWork(data.results[0], category.label);
 }
 async function loadToday() {
   const container = document.getElementById('today-content');
-  container.innerHTML = '<div class="state-loading"><div class="spinner"></div>Loading...</div>';
+  container.innerHTML = '<div class="spinner"></div><div style="text-align:center">Loading paper...</div>';
   try {
-    let cat = activeCat || CATEGORIES[new Date().getDate() % CATEGORIES.length].id;
+    const cat = activeCat || CATEGORIES[Math.floor(Math.random()*CATEGORIES.length)].id;
     const category = CATEGORIES.find(c => c.id === cat);
     const paper = await fetchPaper(category);
     currentPaper = paper;
-    history.unshift({ date: new Date().toISOString().slice(0,10), paper });
-    if (history.length > 100) history = history.slice(0,100);
-    saveStorage();
-    renderToday(paper);
-    renderHistory();
+    addToHistory(paper);
+    const isLiked = liked.some(p => p.id === paper.id);
+    container.innerHTML = `
+      <div class="card">
+        <div><span class="badge">${paper.cat}</span> <span style="color:var(--muted);font-size:12px">${paper.pub}</span></div>
+        <h2 style="margin:12px 0 8px">${paper.title}</h2>
+        <p style="color:var(--muted2)">${paper.authors.slice(0,120)}</p>
+        <hr>
+        <p>${paper.summary || 'No abstract available.'}</p>
+        <div style="display:flex;gap:12px;margin-top:20px">
+          <a href="${paper.url}" target="_blank" class="btn" style="flex:1;text-align:center;text-decoration:none">📄 Read</a>
+          <button id="like-today" class="liked-btn ${isLiked ? 'liked' : ''}">${isLiked ? '❤️' : '♡'}</button>
+        </div>
+      </div>
+      <button id="refresh-today" class="btn btn-outline" style="margin-top:16px;width:100%">⟳ Another paper</button>
+    `;
+    document.getElementById('like-today').onclick = () => { toggleLike(currentPaper); updateTodayLikeButton(); renderLiked(); renderHistory(); };
+    document.getElementById('refresh-today').onclick = () => loadToday();
   } catch(e) {
-    container.innerHTML = `<div class="state-loading">Error: ${e.message}<br><button class="btn-refresh" onclick="location.reload()">Retry</button></div>`;
+    container.innerHTML = `<div class="card">Error: ${e.message}<br><button onclick="location.reload()" class="btn" style="margin-top:12px">Retry</button></div>`;
   }
 }
-function renderToday(p) {
-  const container = document.getElementById('today-content');
-  const likedState = isLiked(p.id);
-  container.innerHTML = `
-    <div class="paper-card">
-      <div><span class="badge">${p.cat}</span> <span style="font-size:10px">${p.pub}</span></div>
-      <h2 class="paper-title">${p.title}</h2>
-      <p class="paper-authors">${p.authors.slice(0,120)}</p>
-      <div class="divider"></div>
-      <p class="paper-abstract">${p.summary || 'No abstract'}</p>
-      <div class="action-row">
-        <a class="btn-read" href="${p.url}" target="_blank">📄 Read</a>
-        <button class="btn-like ${likedState ? 'liked' : ''}" id="like-btn">${likedState ? '❤️' : '♡'}</button>
-      </div>
-    </div>
-    <div class="refresh-row"><button class="btn-refresh" id="refresh-btn">⟳ Another</button></div>
-  `;
-  document.getElementById('like-btn').onclick = () => toggleLike(p);
-  document.getElementById('refresh-btn').onclick = () => loadToday();
-}
+
 function renderLiked() {
   const div = document.getElementById('liked-list');
-  if (!liked.length) { div.innerHTML = '<div class="state-loading">❤️ No liked papers</div>'; return; }
-  div.innerHTML = liked.map(p => `<div class="mini-card" data-id="${p.id}"><div class="mini-title">${p.title.slice(0,80)}</div><div class="mini-row"><span style="font-size:10px">${p.id.slice(0,16)}</span><button class="mini-like" data-id="${p.id}">❤️</button></div></div>`).join('');
-  document.querySelectorAll('.mini-card').forEach(card => card.onclick = (e) => { if(!e.target.classList.contains('mini-like')) window.open(liked.find(p=>p.id===card.dataset.id)?.url, '_blank'); });
-  document.querySelectorAll('.mini-like').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); const paper = liked.find(p=>p.id===btn.dataset.id); if(paper) toggleLike(paper); });
+  if (!liked.length) { div.innerHTML = '<div class="card">No liked papers yet.<br>Tap ♡ on any paper.</div>'; return; }
+  div.innerHTML = liked.map(p => `
+    <div class="mini-card" data-id="${p.id}">
+      <div class="mini-title">${p.title.slice(0,70)}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px">
+        <span style="font-size:10px">${p.id.slice(0,16)}</span>
+        <button class="unlike-btn" data-id="${p.id}" style="background:none;border:none;color:var(--like);cursor:pointer">Remove</button>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.mini-card').forEach(card => card.onclick = (e) => { if(!e.target.classList.contains('unlike-btn')) window.open(liked.find(p=>p.id===card.dataset.id)?.url, '_blank'); });
+  document.querySelectorAll('.unlike-btn').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); const paper = liked.find(p=>p.id===btn.dataset.id); if(paper) toggleLike(paper); });
 }
 function renderHistory() {
   const div = document.getElementById('history-list');
-  if (!history.length) { div.innerHTML = '<div class="state-loading">📜 No history</div>'; return; }
-  div.innerHTML = history.slice(0,30).map(h => `<div class="mini-card" data-id="${h.paper.id}"><div class="mini-title">${h.paper.title.slice(0,80)}</div><div class="mini-row"><span style="font-size:10px">${h.date}</span><button class="mini-like" data-id="${h.paper.id}">${isLiked(h.paper.id)?'❤️':'♡'}</button></div></div>`).join('');
-  document.querySelectorAll('.mini-card').forEach(card => card.onclick = (e) => { if(!e.target.classList.contains('mini-like')) window.open(history.find(h=>h.paper.id===card.dataset.id)?.paper.url, '_blank'); });
-  document.querySelectorAll('.mini-like').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); const entry = history.find(h=>h.paper.id===btn.dataset.id); if(entry) toggleLike(entry.paper); });
+  if (!history.length) { div.innerHTML = '<div class="card">No reading history yet.</div>'; return; }
+  div.innerHTML = history.slice(0,30).map(h => `
+    <div class="mini-card" data-id="${h.paper.id}">
+      <div class="mini-title">${h.paper.title.slice(0,70)}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <span style="font-size:10px">${h.date}</span>
+        <span>${liked.some(p=>p.id===h.paper.id) ? '❤️' : ''}</span>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('#history-list .mini-card').forEach(card => card.onclick = () => { const paper = history.find(h=>h.paper.id===card.dataset.id)?.paper; if(paper) window.open(paper.url, '_blank'); });
 }
-function setupRec() {
-  const recDiv = document.getElementById('rec-content');
-  recDiv.innerHTML = `<button class="btn-refresh" id="gen-rec">✨ Generate recommendations</button><div id="rec-list"></div>`;
-  document.getElementById('gen-rec').onclick = async () => {
-    const recList = document.getElementById('rec-list');
-    recList.innerHTML = '<div class="state-loading"><div class="spinner"></div>Searching...</div>';
-    const seeds = [currentPaper, ...liked.slice(0,3)].filter(Boolean);
-    if (!seeds.length) { recList.innerHTML = '<div class="state-loading">Like some papers first</div>'; return; }
-    const keywords = seeds.map(p => p.title.split(' ').slice(0,3)).flat().slice(0,3);
-    const url = `https://api.openalex.org/works?search=${encodeURIComponent(keywords.join(' '))}&filter=open_access.is_oa:true&per-page=10`;
-    const data = await fetchOpenAlex(url);
-    const recs = data.results.map(w => parseWork(w, 'Rec')).filter(p => !isLiked(p.id) && p.id !== currentPaper?.id).slice(0,6);
-    if (!recs.length) recList.innerHTML = '<div class="state-loading">No recommendations</div>';
-    else recList.innerHTML = recs.map(p => `<div class="mini-card" data-id="${p.id}"><div class="mini-title">${p.title.slice(0,80)}</div><button class="mini-like" data-id="${p.id}">❤️</button></div>`).join('');
-    document.querySelectorAll('#rec-list .mini-card').forEach(card => card.onclick = (e) => { if(!e.target.classList.contains('mini-like')) window.open(recs.find(p=>p.id===card.dataset.id)?.url, '_blank'); });
-    document.querySelectorAll('#rec-list .mini-like').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); const paper = recs.find(p=>p.id===btn.dataset.id); if(paper) toggleLike(paper); });
-  };
-}
+
 function bootApp() {
-  const strip = document.getElementById('cat-scroll');
+  const catBar = document.getElementById('cat-bar');
   CATEGORIES.forEach(c => {
     const btn = document.createElement('button');
-    btn.className = 'cat-btn';
     btn.textContent = c.label;
-    btn.onclick = () => { document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); activeCat = c.id; loadToday(); };
-    strip.appendChild(btn);
+    btn.className = 'btn-outline';
+    btn.style.padding = '6px 14px';
+    btn.style.borderRadius = '40px';
+    btn.style.marginRight = '8px';
+    btn.onclick = () => {
+      document.querySelectorAll('#cat-bar button').forEach(b => b.classList.remove('btn'));
+      btn.classList.add('btn');
+      activeCat = c.id;
+      loadToday();
+    };
+    catBar.appendChild(btn);
   });
   loadToday();
   renderLiked();
   renderHistory();
-  setupRec();
-  document.getElementById('clear-liked').onclick = () => { if(confirm('Clear all liked?')) { liked = []; saveStorage(); renderLiked(); } };
-  document.querySelectorAll('.nav-btn').forEach(btn => btn.onclick = () => {
-    const page = btn.dataset.page;
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-    document.getElementById(`page-${page}`).classList.add('active');
-    btn.classList.add('active');
-    if (page === 'liked') renderLiked();
-    if (page === 'history') renderHistory();
-    if (page === 'rec') setupRec();
+  // navigation
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`page-${btn.dataset.page}`).classList.add('active');
+      btn.classList.add('active');
+      if (btn.dataset.page === 'liked') renderLiked();
+      if (btn.dataset.page === 'history') renderHistory();
+    };
   });
 }
 </script>
