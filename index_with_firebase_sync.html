@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<title>Daily Physics — with Cloud Sync</title>
+<style>
+:root{--bg:#0a0a0f;--surface:#13131a;--accent:#c8b8f5;--like:#f5829a;--muted:#6a6a7a}
+body{background:var(--bg);color:#f0efe8;font-family:'DM Sans',sans-serif;font-weight:300;min-height:100dvh}
+.auth-modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:1000}
+.auth-box{background:var(--surface);border-radius:24px;padding:40px 30px;max-width:340px;text-align:center}
+.auth-title{font-size:20px;margin-bottom:8px;font-family:'DM Serif Display',serif}
+.auth-desc{font-size:13px;color:var(--muted);margin-bottom:24px}
+.auth-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px 16px;color:#f0efe8;margin-bottom:12px;font-family:'DM Sans',sans-serif}
+.auth-button{width:100%;background:var(--accent);color:#0a0a0f;border:none;border-radius:12px;padding:12px;font-weight:600;cursor:pointer;margin-bottom:8px;transition:.2s}
+.auth-button:hover{opacity:.9}
+.auth-guest{background:transparent;border:1px solid var(--accent);color:var(--accent)}
+.sync-status{position:fixed;top:16px;right:16px;background:var(--surface);border-radius:20px;padding:8px 14px;font-size:12px;color:var(--muted);z-index:100}
+.sync-status.synced{color:var(--accent)}
+.sync-status.error{color:var(--like)}
+</style>
+</head>
+<body>
+
+<!-- Firebase Initialization Instructions -->
+<div id="auth-modal" class="auth-modal">
+  <div class="auth-box">
+    <div class="auth-title">Daily Physics Sync</div>
+    <div class="auth-desc">Set up cloud sync to save your papers across devices</div>
+    <input type="email" class="auth-input" id="email-input" placeholder="your@email.com">
+    <input type="password" class="auth-input" id="password-input" placeholder="Password">
+    <button class="auth-button" id="signup-btn">Create Account</button>
+    <button class="auth-button" id="login-btn">Sign In</button>
+    <button class="auth-button auth-guest" id="guest-btn">Continue as Guest</button>
+    <div style="margin-top:20px;font-size:11px;color:var(--muted)">
+      ⚠️ First-time setup: Replace the firebaseConfig below with your Firebase project credentials
+    </div>
+  </div>
+</div>
+
+<div id="sync-status" class="sync-status">○ Initializing...</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js"></script>
+
+<script>
+// ⚠️ IMPORTANT: Replace this with your Firebase config
+// Get it from Firebase Console > Project Settings > Your apps
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY_HERE",
+  authDomain: "your-project.firebaseapp.com",
+  databaseURL: "https://your-project.firebaseio.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "1234567890",
+  appId: "1:1234567890:web:abcdef1234567890"
+};
+
+// Initialize Firebase
+let firebase_app, auth, database;
+let currentUserId = null;
+let isGuest = false;
+
+try {
+  firebase_app = firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  database = firebase.database();
+  console.log('✓ Firebase initialized');
+} catch(e) {
+  console.error('Firebase init error:', e);
+  alert('⚠️ Firebase not configured. Update firebaseConfig in the script.');
+}
+
+// ========== CLOUD STORAGE ==========
+const CloudStorage = {
+  
+  async saveToCloud(userId, data) {
+    try {
+      const ref = database.ref(`users/${userId}/data`);
+      await ref.set({
+        liked: data.liked,
+        history: data.history,
+        currentPaper: data.currentPaper,
+        lastUpdated: new Date().toISOString()
+      });
+      this.showStatus('✓ Synced', 'synced');
+      console.log('✓ Saved to cloud');
+      return true;
+    } catch(err) {
+      this.showStatus('✗ Sync failed', 'error');
+      console.error('Cloud save error:', err);
+      return false;
+    }
+  },
+
+  async loadFromCloud(userId) {
+    try {
+      const snapshot = await database.ref(`users/${userId}/data`).once('value');
+      const data = snapshot.val();
+      if(!data) return null;
+      this.showStatus('✓ Synced', 'synced');
+      console.log('✓ Loaded from cloud');
+      return data;
+    } catch(err) {
+      this.showStatus('✗ Load failed', 'error');
+      console.error('Cloud load error:', err);
+      return null;
+    }
+  },
+
+  // Real-time sync - updates when another device saves
+  onDataChange(userId, callback) {
+    try {
+      const ref = database.ref(`users/${userId}/data`);
+      ref.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if(data && data.lastUpdated) {
+          callback(data);
+        }
+      });
+      console.log('✓ Listening for cloud changes');
+    } catch(err) {
+      console.error('Real-time listener error:', err);
+    }
+  },
+
+  showStatus(text, type = 'default') {
+    const el = document.getElementById('sync-status');
+    el.textContent = text;
+    el.className = `sync-status ${type}`;
+  }
+};
+
+// ========== AUTHENTICATION ==========
+async function signUp(email, password) {
+  try {
+    const credential = await auth.createUserWithEmailAndPassword(email, password);
+    currentUserId = credential.user.uid;
+    console.log('✓ Signed up:', currentUserId);
+    return true;
+  } catch(err) {
+    alert('Sign up failed: ' + err.message);
+    return false;
+  }
+}
+
+async function logIn(email, password) {
+  try {
+    const credential = await auth.signInWithEmailAndPassword(email, password);
+    currentUserId = credential.user.uid;
+    console.log('✓ Logged in:', currentUserId);
+    return true;
+  } catch(err) {
+    alert('Login failed: ' + err.message);
+    return false;
+  }
+}
+
+function guestMode() {
+  // Generate a temporary guest ID
+  currentUserId = 'guest_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+  isGuest = true;
+  localStorage.setItem('guestId', currentUserId);
+  console.log('✓ Guest mode:', currentUserId);
+}
+
+async function restoreGuestSession() {
+  const savedGuestId = localStorage.getItem('guestId');
+  if(savedGuestId) {
+    currentUserId = savedGuestId;
+    isGuest = true;
+    console.log('✓ Restored guest session');
+    return true;
+  }
+  return false;
+}
+
+// ========== AUTH UI SETUP ==========
+document.getElementById('signup-btn').onclick = async () => {
+  const email = document.getElementById('email-input').value;
+  const password = document.getElementById('password-input').value;
+  if(email && password && await signUp(email, password)) {
+    document.getElementById('auth-modal').style.display = 'none';
+  }
+};
+
+document.getElementById('login-btn').onclick = async () => {
+  const email = document.getElementById('email-input').value;
+  const password = document.getElementById('password-input').value;
+  if(email && password && await logIn(email, password)) {
+    document.getElementById('auth-modal').style.display = 'none';
+  }
+};
+
+document.getElementById('guest-btn').onclick = () => {
+  guestMode();
+  document.getElementById('auth-modal').style.display = 'none';
+};
+
+// Check for existing session or guest
+auth.onAuthStateChanged(async (user) => {
+  if(user) {
+    // User is logged in
+    currentUserId = user.uid;
+    isGuest = false;
+    console.log('✓ Authenticated as:', user.email);
+    document.getElementById('auth-modal').style.display = 'none';
+  } else if(await restoreGuestSession()) {
+    // Guest session exists
+    document.getElementById('auth-modal').style.display = 'none';
+  }
+  // else: show auth modal (already displayed)
+});
+
+// ========== DATA SYNC WRAPPER ==========
+// Use this in your app to sync with cloud
+
+class AppWithCloudSync {
+  constructor() {
+    this.liked = [];
+    this.history = [];
+    this.currentPaper = null;
+    this.syncEnabled = false;
+  }
+
+  // Initialize sync for current user
+  initSync() {
+    if(!currentUserId) return;
+    
+    CloudStorage.onDataChange(currentUserId, (cloudData) => {
+      console.log('📡 Remote update received');
+      this.liked = cloudData.liked || [];
+      this.history = cloudData.history || [];
+      this.currentPaper = cloudData.currentPaper || null;
+      // Re-render UI here
+      this.renderUI();
+    });
+    
+    this.syncEnabled = true;
+  }
+
+  // Save to both local storage and cloud
+  async savePaper(action) {
+    // Save to local storage first
+    localStorage.setItem('appData', JSON.stringify({
+      liked: this.liked,
+      history: this.history,
+      currentPaper: this.currentPaper
+    }));
+
+    // Then to cloud
+    if(this.syncEnabled && currentUserId) {
+      await CloudStorage.saveToCloud(currentUserId, {
+        liked: this.liked,
+        history: this.history,
+        currentPaper: this.currentPaper
+      });
+    }
+  }
+
+  // Load data from cloud (or local if offline)
+  async loadData() {
+    if(this.syncEnabled && currentUserId) {
+      const cloudData = await CloudStorage.loadFromCloud(currentUserId);
+      if(cloudData) {
+        this.liked = cloudData.liked || [];
+        this.history = cloudData.history || [];
+        this.currentPaper = cloudData.currentPaper || null;
+        return;
+      }
+    }
+
+    // Fallback to local storage
+    const localData = JSON.parse(localStorage.getItem('appData') || '{}');
+    this.liked = localData.liked || [];
+    this.history = localData.history || [];
+    this.currentPaper = localData.currentPaper || null;
+  }
+
+  renderUI() {
+    console.log('Liked:', this.liked.length, 'History:', this.history.length);
+  }
+
+  // Example methods
+  toggleLike(paper) {
+    const idx = this.liked.findIndex(p => p.id === paper.id);
+    if(idx >= 0) {
+      this.liked.splice(idx, 1);
+    } else {
+      this.liked.push(paper);
+    }
+    this.savePaper('like');
+  }
+
+  addToHistory(paper) {
+    if(!this.history.find(p => p.id === paper.id)) {
+      this.history.unshift({...paper, viewedAt: new Date().toISOString()});
+      this.savePaper('view');
+    }
+  }
+}
+
+// ========== USAGE EXAMPLE ==========
+const app = new AppWithCloudSync();
+
+// Wait for auth, then init
+setTimeout(async () => {
+  if(currentUserId) {
+    app.initSync();
+    await app.loadData();
+    app.renderUI();
+    console.log('✓ App ready with cloud sync');
+  } else {
+    console.log('⚠️ User not authenticated yet');
+  }
+}, 1000);
+
+// Example: use in your app
+// app.toggleLike(paper)  // Auto-saves to cloud
+// app.addToHistory(paper)  // Auto-syncs
+
+window.app = app; // Expose for testing
+</script>
+
+</body>
+</html>
