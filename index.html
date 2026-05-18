@@ -25,7 +25,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .logo{font-family:var(--serif);font-size:20px;display:flex;align-items:center;gap:8px}
 .logo-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 3s ease infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-.date-chip{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:5px 12px}
+.date-chip{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:5px 12px;display:flex;align-items:center;gap:8px}
 .page-title{font-family:var(--serif);font-size:26px;letter-spacing:-.02em;padding-bottom:10px}
 .cat-scroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -20px 24px;padding:0 20px}
 .cat-scroll::-webkit-scrollbar{display:none}
@@ -99,6 +99,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
   <button class="nav-btn" data-page="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg><span>History</span></button>
   <button class="nav-btn" data-page="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>For You</span></button>
 </nav>
+
+<!-- Auth wall (shown until signed in) -->
+<div id="auth-wall">
+  <div class="auth-box">
+    <div class="auth-logo"><span class="logo-dot"></span>Daily Physics</div>
+    <p class="auth-sub">Sign in to sync your liked papers across devices</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login">Log in</button>
+      <button class="auth-tab" id="tab-signup">Sign up</button>
+    </div>
+    <input class="auth-field" id="auth-email" type="email" placeholder="Email" autocomplete="email">
+    <input class="auth-field" id="auth-password" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="auth-btn" id="auth-submit-btn">Log in</button>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
+
 <style>
 #auth-wall{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:24px}
 .auth-box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border2);border-radius:24px;padding:32px 28px}
@@ -117,38 +134,26 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .btn-signout{background:none;border:1px solid var(--border);border-radius:40px;padding:4px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:var(--sans)}
 </style>
 
-<!-- Auth wall (shown until signed in) -->
-<div id="auth-wall">
-  <div class="auth-box">
-    <div class="auth-logo"><span class="logo-dot"></span>Daily Physics</div>
-    <p class="auth-sub">Sign in to sync your liked papers across devices</p>
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Log in</button>
-      <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Sign up</button>
-    </div>
-    <input class="auth-field" id="auth-email" type="email" placeholder="Email" autocomplete="email" onkeydown="if(event.key==='Enter')window.__authSubmit()">
-    <input class="auth-field" id="auth-password" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')window.__authSubmit()">
-    <button class="auth-btn" id="auth-submit" onclick="window.__authSubmit()">Log in</button>
-    <div class="auth-err" id="auth-err"></div>
-  </div>
-</div>
-
 <script>
+// Global helper for tab switching (defined early, stays synchronous)
 window.switchTab = function(tab) {
-  document.getElementById('tab-login').classList.toggle('active', tab==='login');
-  document.getElementById('tab-signup').classList.toggle('active', tab==='signup');
-  document.getElementById('auth-submit').textContent = tab==='login' ? 'Log in' : 'Create account';
-  // Use a plain global so the module script can always read the current value
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  const submitBtn = document.getElementById('auth-submit-btn');
+  if (submitBtn) submitBtn.textContent = tab === 'login' ? 'Log in' : 'Create account';
   window.__authMode = tab;
-  document.getElementById('auth-err').style.display = 'none';
-}
-switchTab('login');
+  const errDiv = document.getElementById('auth-err');
+  if (errDiv) errDiv.style.display = 'none';
+};
+// Initial UI setup
+window.__authMode = 'login';
+document.addEventListener('DOMContentLoaded', () => {
+  window.switchTab('login');
+});
 </script>
 
 <script type="module">
 // ========== FIREBASE SETUP ==========
-// 🔧 REPLACE these with your Firebase project config:
-//    console.firebase.google.com → Project Settings → Your apps → SDK setup
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth, onAuthStateChanged,
@@ -157,7 +162,6 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
 
 const firebaseConfig = {
   apiKey: "AIzaSyBhSfk39qU3YlBA4etrNC_AvxUNxR15sDA",
@@ -170,173 +174,158 @@ const firebaseConfig = {
 };
 
 const fbApp = initializeApp(firebaseConfig);
-const auth  = getAuth(fbApp);
-const db    = getFirestore(fbApp);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
 
 let userId = null;
+let liked = [];
+let history = [];
+let currentPaper = null;
+let activeCat = null;
 
-// ── Auth UI wiring ──────────────────────────────────────────────
-// Exposed as a global so the button's inline onclick always finds it,
-// even if the rest of the module had an error.
-window.__authSubmit = async () => {
-  const submitBtn = document.getElementById('auth-submit');
-  const errDiv    = document.getElementById('auth-err');
-  const email    = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-password').value;
-  const mode     = window.__authMode || 'login';
+// Firestore helpers
+async function loadFromFirestore() {
+  const snap = await getDoc(doc(db, 'users', userId));
+  if (snap.exists()) {
+    const data = snap.data();
+    liked = data.liked || [];
+    history = data.history || [];
+  }
+}
+async function saveToFirestore() {
+  if (!userId) return;
+  await setDoc(doc(db, 'users', userId), { liked, history }, { merge: true });
+}
+
+function updateBadge() {
+  const badge = document.getElementById('liked-badge');
+  if (liked.length) {
+    badge.style.display = 'block';
+    badge.textContent = liked.length > 99 ? '99+' : liked.length;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function saveLiked() { updateBadge(); saveToFirestore(); }
+function saveHistory() { saveToFirestore(); }
+function isLiked(id) { return liked.some(p => p.id === id); }
+function toggleLike(paper) {
+  if (isLiked(paper.id)) {
+    liked = liked.filter(p => p.id !== paper.id);
+  } else {
+    liked.unshift(paper);
+    if (liked.length > 200) liked = liked.slice(0, 200);
+  }
+  saveLiked();
+  return isLiked(paper.id);
+}
+
+// Helper: friendly Firebase errors
+function friendlyError(code) {
+  const map = {
+    'auth/email-already-in-use': 'That email already has an account. Try logging in.',
+    'auth/invalid-email': 'Please enter a valid email address.',
+    'auth/weak-password': 'Password must be at least 6 characters.',
+    'auth/user-not-found': 'No account found with that email.',
+    'auth/wrong-password': 'Incorrect password.',
+    'auth/invalid-credential': 'Incorrect email or password.',
+    'auth/too-many-requests': 'Too many attempts. Try again later.',
+    'auth/network-request-failed': 'Network error. Check your connection.'
+  };
+  return map[code] || `Error: ${code}`;
+}
+
+// ----- AUTH SUBMIT (robust event listener) -----
+const authSubmitBtn = document.getElementById('auth-submit-btn');
+const authEmail = document.getElementById('auth-email');
+const authPassword = document.getElementById('auth-password');
+const authErrDiv = document.getElementById('auth-err');
+
+async function handleAuthSubmit() {
+  if (!authSubmitBtn) return;
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+  const mode = window.__authMode || 'login';
 
   if (!email || !password) {
-    errDiv.textContent = 'Please enter your email and password.';
-    errDiv.style.display = 'block';
+    authErrDiv.textContent = 'Please enter your email and password.';
+    authErrDiv.style.display = 'block';
     return;
   }
 
-  errDiv.style.display = 'none';
-  submitBtn.disabled = true;
-  submitBtn.textContent = '…';
+  authErrDiv.style.display = 'none';
+  const originalText = authSubmitBtn.textContent;
+  authSubmitBtn.disabled = true;
+  authSubmitBtn.textContent = '…';
   try {
     if (mode === 'signup') {
       await createUserWithEmailAndPassword(auth, email, password);
     } else {
       await signInWithEmailAndPassword(auth, email, password);
     }
-    // onAuthStateChanged below will hide the auth wall and boot the app
-  } catch(e) {
-    errDiv.textContent = friendlyError(e.code);
-    errDiv.style.display = 'block';
-    submitBtn.disabled = false;
-    submitBtn.textContent = mode === 'signup' ? 'Create account' : 'Log in';
-  }
-};
-
-function friendlyError(code) {
-  const map = {
-    'auth/email-already-in-use':    'That email already has an account. Try logging in.',
-    'auth/invalid-email':           'Please enter a valid email address.',
-    'auth/weak-password':           'Password must be at least 6 characters.',
-    'auth/user-not-found':          'No account found with that email.',
-    'auth/wrong-password':          'Incorrect password.',
-    'auth/invalid-credential':      'Incorrect email or password.',
-    'auth/too-many-requests':       'Too many attempts. Try again later.',
-    'auth/network-request-failed':  'Network error. Check your connection.',
-  };
-  return map[code] || `Error: ${code}`;
-}
-
-// ── Firestore helpers ────────────────────────────────────────────
-async function loadFromFirestore() {
-  const snap = await getDoc(doc(db, 'users', userId));
-  if (snap.exists()) {
-    const data = snap.data();
-    liked   = data.liked   || [];
-    history = data.history || [];
+    // On success, onAuthStateChanged will hide wall and boot app
+  } catch (err) {
+    authErrDiv.textContent = friendlyError(err.code);
+    authErrDiv.style.display = 'block';
+    authSubmitBtn.disabled = false;
+    authSubmitBtn.textContent = originalText;
   }
 }
-async function saveToFirestore() {
-  await setDoc(doc(db, 'users', userId), { liked, history }, { merge: true });
+
+// attach event listener (no inline onclick flakiness)
+if (authSubmitBtn) {
+  authSubmitBtn.addEventListener('click', handleAuthSubmit);
+  // allow Enter key in fields
+  const fields = [authEmail, authPassword];
+  fields.forEach(field => {
+    if (field) field.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleAuthSubmit();
+    });
+  });
 }
 
-// ── Wait for auth state, then boot app ──────────────────────────
-onAuthStateChanged(auth, async user => {
+// ---------- AUTH STATE ----------
+onAuthStateChanged(auth, async (user) => {
   if (!user) return; // still on auth wall
   userId = user.uid;
   await loadFromFirestore();
-  document.getElementById('auth-wall').style.display = 'none';
-
-  // Show signed-in user in header
+  
+  // Hide auth wall
+  const wall = document.getElementById('auth-wall');
+  if (wall) wall.style.display = 'none';
+  
+  // Show user email & sign out in date-chip
   const chip = document.getElementById('date-chip');
   chip.innerHTML = `<span class="auth-email" title="${user.email}">${user.email}</span>
     <button class="btn-signout" id="signout-btn">Sign out</button>`;
-  document.getElementById('signout-btn').onclick = async () => {
-    liked = []; history = [];
-    await signOut(auth);
-    location.reload();
-  };
-
+  const signoutBtn = document.getElementById('signout-btn');
+  if (signoutBtn) {
+    signoutBtn.onclick = async () => {
+      liked = [];
+      history = [];
+      await signOut(auth);
+      location.reload();
+    };
+  }
+  
+  // Now boot full app
   bootApp();
 });
 
-// ========== STORAGE ==========
-let liked   = [];
-let history = [];
-let currentPaper = null;
-let activeCat    = null;
-
-function saveLiked()   { updateBadge(); saveToFirestore(); }
-function saveHistory() { saveToFirestore(); }
-
-// ── All app code runs inside bootApp() so it waits for auth ─────
-function bootApp() {
-
-// ========== CATEGORIES with high-precision keyword searches ==========
-// Each category has a search query (sent to OpenAlex) and a list of strong keywords 
-// that MUST appear in the title (or abstract as fallback) for the paper to be accepted.
-const CATEGORIES = [
-  { 
-    id: 'quantum', 
-    label: 'Quantum', 
-    searchQuery: 'quantum mechanics OR quantum computing OR quantum information OR entanglement OR qubit',
-    keywords: ['quantum', 'qubit', 'entanglement', 'superposition', 'decoherence', 'quantum gate', 'quantum circuit', 'bell inequality', 'quantum algorithm']
-  },
-  { 
-    id: 'hep-th', 
-    label: 'HEP Theory', 
-    searchQuery: 'string theory OR quantum field theory OR conformal field theory OR supersymmetry OR gauge theory OR ads/cft',
-    keywords: ['string theory', 'quantum field', 'conformal field', 'supersymmetry', 'gauge theory', 'ads/cft', 'brane', 'supergravity', 'yang-mills']
-  },
-  { 
-    id: 'astro-ph', 
-    label: 'Astrophysics', 
-    searchQuery: 'astrophysics OR cosmology OR galaxy formation OR dark matter OR gravitational waves OR black hole',
-    keywords: ['galaxy', 'cosmology', 'dark matter', 'black hole', 'supernova', 'neutron star', 'gravitational wave', 'cmb', 'redshift']
-  },
-  { 
-    id: 'cond-mat', 
-    label: 'Condensed Matter', 
-    searchQuery: 'condensed matter physics OR superconductivity OR topological insulator OR graphene OR quantum hall',
-    keywords: ['superconductivity', 'topological insulator', 'graphene', 'quantum hall', 'magnetic', 'fermion', 'boson', 'landau', 'fermi liquid']
-  },
-  { 
-    id: 'gr-qc', 
-    label: 'Gravity', 
-    searchQuery: 'general relativity OR gravitational waves OR black hole physics OR spacetime OR modified gravity',
-    keywords: ['general relativity', 'gravitational wave', 'black hole', 'spacetime', 'singularity', 'einstein', 'horizon', 'wormhole']
-  },
-  { 
-    id: 'hep-ph', 
-    label: 'Particles', 
-    searchQuery: 'particle physics OR collider physics OR neutrino physics OR higgs boson OR dark matter particle',
-    keywords: ['collider', 'neutrino', 'higgs', 'quark', 'lepton', 'particle physics', 'lhc', 'tev', 'decay', 'cross section', 'dark matter particle']
-  },
-  { 
-    id: 'math-ph', 
-    label: 'Math-Phys', 
-    searchQuery: 'mathematical physics OR operator algebra OR hilbert space OR functional analysis OR quantum groups',
-    keywords: ['mathematical physics', 'hilbert space', 'operator algebra', 'functional analysis', 'quantum group', 'c* algebra', 'spectral theory']
-  },
-  { 
-    id: 'nucl-th', 
-    label: 'Nuclear', 
-    searchQuery: 'nuclear physics OR nuclear structure OR nuclear reaction OR neutron star OR quark-gluon plasma',
-    keywords: ['nuclear physics', 'nucleus', 'neutron', 'proton', 'fusion', 'fission', 'isotope', 'quark-gluon', 'nuclear matter']
-  }
-];
-
-// Helper: convert OpenAlex inverted abstract to plain text
+// ---------- OPENALEX LOGIC ----------
 function invertedToText(inv) {
   if (!inv) return '';
   const words = Object.entries(inv).sort((a,b) => a[1][0] - b[1][0]);
   return words.map(([word]) => word).join(' ');
 }
 
-// Fetch from OpenAlex (CORS friendly)
 async function fetchOpenAlex(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
 
-// Parse OpenAlex work
 function parseOpenAlexWork(work, categoryLabel = 'Physics') {
   const title = work.title || 'Untitled';
   let abstract = '';
@@ -355,71 +344,52 @@ function parseOpenAlexWork(work, categoryLabel = 'Physics') {
   else url = work.id;
   return {
     id: paperId,
-    title: title,
+    title,
     summary: abstract.length > 800 ? abstract.slice(0,800)+'…' : abstract,
-    authors: authors,
+    authors,
     cat: categoryLabel,
     catLabel: categoryLabel,
     pub: pubDate,
-    url: url,
+    url,
     raw: work
   };
 }
 
-// Strict validation: title MUST contain at least one keyword from the category list
+const CATEGORIES = [
+  { id: 'quantum', label: 'Quantum', searchQuery: 'quantum mechanics OR quantum computing OR quantum information OR entanglement OR qubit', keywords: ['quantum', 'qubit', 'entanglement', 'superposition', 'decoherence', 'quantum gate', 'quantum circuit', 'bell inequality', 'quantum algorithm'] },
+  { id: 'hep-th', label: 'HEP Theory', searchQuery: 'string theory OR quantum field theory OR conformal field theory OR supersymmetry OR gauge theory OR ads/cft', keywords: ['string theory', 'quantum field', 'conformal field', 'supersymmetry', 'gauge theory', 'ads/cft', 'brane', 'supergravity', 'yang-mills'] },
+  { id: 'astro-ph', label: 'Astrophysics', searchQuery: 'astrophysics OR cosmology OR galaxy formation OR dark matter OR gravitational waves OR black hole', keywords: ['galaxy', 'cosmology', 'dark matter', 'black hole', 'supernova', 'neutron star', 'gravitational wave', 'cmb', 'redshift'] },
+  { id: 'cond-mat', label: 'Condensed Matter', searchQuery: 'condensed matter physics OR superconductivity OR topological insulator OR graphene OR quantum hall', keywords: ['superconductivity', 'topological insulator', 'graphene', 'quantum hall', 'magnetic', 'fermion', 'boson', 'landau', 'fermi liquid'] },
+  { id: 'gr-qc', label: 'Gravity', searchQuery: 'general relativity OR gravitational waves OR black hole physics OR spacetime OR modified gravity', keywords: ['general relativity', 'gravitational wave', 'black hole', 'spacetime', 'singularity', 'einstein', 'horizon', 'wormhole'] },
+  { id: 'hep-ph', label: 'Particles', searchQuery: 'particle physics OR collider physics OR neutrino physics OR higgs boson OR dark matter particle', keywords: ['collider', 'neutrino', 'higgs', 'quark', 'lepton', 'particle physics', 'lhc', 'tev', 'decay', 'cross section', 'dark matter particle'] },
+  { id: 'math-ph', label: 'Math-Phys', searchQuery: 'mathematical physics OR operator algebra OR hilbert space OR functional analysis OR quantum groups', keywords: ['mathematical physics', 'hilbert space', 'operator algebra', 'functional analysis', 'quantum group', 'c* algebra', 'spectral theory'] },
+  { id: 'nucl-th', label: 'Nuclear', searchQuery: 'nuclear physics OR nuclear structure OR nuclear reaction OR neutron star OR quark-gluon plasma', keywords: ['nuclear physics', 'nucleus', 'neutron', 'proton', 'fusion', 'fission', 'isotope', 'quark-gluon', 'nuclear matter'] }
+];
+
 function matchesCategoryStrict(paper, category) {
   const titleLower = paper.title.toLowerCase();
   const abstractLower = paper.summary.toLowerCase();
-  // Require at least one keyword in title (more reliable than abstract)
-  const hasKeyword = category.keywords.some(kw => titleLower.includes(kw.toLowerCase()));
-  // If no keyword in title, check abstract as fallback (but still strict)
-  const hasKeywordInAbstract = category.keywords.some(kw => abstractLower.includes(kw.toLowerCase()));
-  return hasKeyword || hasKeywordInAbstract;
+  return category.keywords.some(kw => titleLower.includes(kw.toLowerCase())) || category.keywords.some(kw => abstractLower.includes(kw.toLowerCase()));
 }
 
-// Fetch a paper that strictly matches the category (with many retries)
 async function fetchValidCategoryPaper(category, attempt = 0) {
   const maxAttempts = 8;
-  const maxPage = 200;
-  // Use a random page to get diverse results
-  const page = Math.floor(Math.random() * maxPage) + 1;
-  
-  // Build a search query: use the category's searchQuery + open access filter
-  // Adding "open_access.is_oa:true" ensures we get free PDFs
+  const page = Math.floor(Math.random() * 200) + 1;
   const url = `https://api.openalex.org/works?search=${encodeURIComponent(category.searchQuery)}&filter=open_access.is_oa:true,locations.source.id:S4306400194&sort=relevance_score:desc&page=${page}&per-page=25`;
-  
   const data = await fetchOpenAlex(url);
   if (!data.results || data.results.length === 0) {
-    if (attempt < maxAttempts) {
-      return fetchValidCategoryPaper(category, attempt + 1);
-    }
-    throw new Error(`No papers found for ${category.label} after multiple attempts`);
+    if (attempt < maxAttempts) return fetchValidCategoryPaper(category, attempt + 1);
+    throw new Error(`No papers found for ${category.label}`);
   }
-  
-  // Filter papers that strictly match the category keywords
-  const candidates = data.results
-    .map(w => parseOpenAlexWork(w, category.label))
-    .filter(p => matchesCategoryStrict(p, category));
-  
-  if (candidates.length > 0) {
-    const randomIndex = Math.floor(Math.random() * candidates.length);
-    return candidates[randomIndex];
-  }
-  
-  // If no strict match and we have retries left, try again with a different page/seed
+  const candidates = data.results.map(w => parseOpenAlexWork(w, category.label)).filter(p => matchesCategoryStrict(p, category));
+  if (candidates.length > 0) return candidates[Math.floor(Math.random() * candidates.length)];
   if (attempt < maxAttempts) {
-    // Slight delay to avoid hammering
     await new Promise(r => setTimeout(r, 200));
     return fetchValidCategoryPaper(category, attempt + 1);
   }
-  
-  // Last resort: take the most relevant result from the API even if keywords are weak
-  console.warn(`Could not find strict match for ${category.label} after ${maxAttempts} attempts, returning best available`);
   return parseOpenAlexWork(data.results[0], category.label);
 }
 
-// Daily deterministic seed (just for which category to pick on first load)
-function todaySeed() { const d = new Date(); return d.getFullYear()*366 + (d.getMonth()+1)*32 + d.getDate(); }
 function todayStr() { return new Date().toISOString().slice(0,10); }
 
 async function loadTodayPaper(randomMode = false, specificCat = null) {
@@ -432,17 +402,15 @@ async function loadTodayPaper(randomMode = false, specificCat = null) {
   try {
     let catId = specificCat || activeCat;
     if (!catId) {
-      const idx = randomMode ? Math.floor(Math.random()*CATEGORIES.length) : (todaySeed() % CATEGORIES.length);
+      const idx = randomMode ? Math.floor(Math.random()*CATEGORIES.length) : (new Date().getTime() % CATEGORIES.length);
       catId = CATEGORIES[idx].id;
     }
     const category = CATEGORIES.find(c => c.id === catId);
-    if (!category) throw new Error('Unknown category');
     const paper = await fetchValidCategoryPaper(category);
     currentPaper = paper;
-    // History
     const today = todayStr();
     history = history.filter(h => !(h.date === today && h.paper.id === paper.id));
-    history.unshift({ date: today, paper: paper });
+    history.unshift({ date: today, paper });
     if (history.length > 280) history = history.slice(0,280);
     saveHistory();
     renderTodayUI(paper);
@@ -452,8 +420,7 @@ async function loadTodayPaper(randomMode = false, specificCat = null) {
     loadingDiv.style.display = 'none';
     errorDiv.style.display = 'block';
     errorDiv.innerHTML = `⚠️ ${err.message}<br><button class="btn-refresh" id="manual-retry" style="margin-top:12px;">⟳ Retry now</button>`;
-    const retryBtn = document.getElementById('manual-retry');
-    if (retryBtn) retryBtn.onclick = () => loadTodayPaper(randomMode, specificCat);
+    document.getElementById('manual-retry')?.addEventListener('click', () => loadTodayPaper(randomMode, specificCat), { once: true });
   }
 }
 
@@ -461,7 +428,7 @@ function renderTodayUI(p) {
   document.getElementById('t-badge').textContent = p.cat;
   document.getElementById('t-date').textContent = p.pub ? `published ${p.pub}` : '';
   document.getElementById('t-title').textContent = p.title;
-  document.getElementById('t-authors').textContent = p.authors.length > 140 ? p.authors.slice(0,140)+'…' : p.authors;
+  document.getElementById('t-authors').textContent = p.authors.slice(0,140);
   document.getElementById('t-abstract').textContent = p.summary;
   document.getElementById('t-link').href = p.url;
   document.getElementById('t-id').textContent = p.id;
@@ -471,154 +438,58 @@ function renderTodayUI(p) {
   likeBtn.textContent = likedState ? '❤️' : '♡';
 }
 
-function saveLiked()   { updateBadge(); saveToFirestore(); }
-function saveHistory() { saveToFirestore(); }
-function updateBadge() { const b = document.getElementById('liked-badge'); if(liked.length) { b.style.display='block'; b.textContent=liked.length>99?'99+':liked.length; } else b.style.display='none'; }
-function isLiked(id) { return liked.some(p=>p.id===id); }
-function toggleLike(paper) { if(isLiked(paper.id)) liked = liked.filter(p=>p.id!==paper.id); else { liked.unshift(paper); if(liked.length>200) liked=liked.slice(0,200); } saveLiked(); return isLiked(paper.id); }
-
-// Category bar
-const strip = document.getElementById('cat-scroll');
-CATEGORIES.forEach(cat => {
-  const btn = document.createElement('button');
-  btn.className = 'cat-btn';
-  btn.textContent = cat.label;
-  btn.onclick = () => {
-    document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    activeCat = cat.id;
-    loadTodayPaper(false, activeCat);
-  };
-  strip.appendChild(btn);
-});
-document.getElementById('date-chip').innerText = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-document.getElementById('refresh-btn').onclick = () => loadTodayPaper(true, activeCat);
-document.getElementById('t-like').onclick = () => { if(currentPaper) { toggleLike(currentPaper); renderTodayUI(currentPaper); renderLikedList(); renderHistoryList(); } };
-
-// ========== LIKED PAGE ==========
+// Liked / History / Rec UI (simplified)
 function renderLikedList() {
   const container = document.getElementById('liked-list');
-  if(!liked.length) { container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>No liked papers yet.<br>Tap ♡ on any paper.</div>`; return; }
-  container.innerHTML = liked.map(p => miniCardHTML(p, true)).join('');
-  bindMiniCardEvents(container, (id)=>liked.find(p=>p.id===id), (id)=>{
-    const paper = liked.find(p=>p.id===id);
-    if(paper) { toggleLike(paper); renderLikedList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); renderHistoryList(); }
-  });
+  if (!liked.length) { container.innerHTML = `<div class="empty-state">❤️ No liked papers yet.</div>`; return; }
+  container.innerHTML = liked.map(p => `<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat||'physics'}</div><div class="mini-title">${p.title.slice(0,85)}</div><div class="mini-authors">${p.authors.slice(0,65)}</div><div class="mini-row"><span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.id.slice(0,20)}</span><button class="mini-like ${isLiked(p.id)?'liked':''}" data-id="${p.id}">${isLiked(p.id)?'❤️':'♡'}</button></div></button>`).join('');
+  document.querySelectorAll('.mini-card').forEach(c => c.onclick = (e) => { if(!e.target.classList.contains('mini-like')) window.open(liked.find(p=>p.id===c.dataset.id)?.url, '_blank'); });
+  document.querySelectorAll('.mini-like').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); const pid = btn.dataset.id; const paper = liked.find(p=>p.id===pid); if(paper) { toggleLike(paper); renderLikedList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); renderHistoryList(); } });
 }
-document.getElementById('liked-clear').onclick = () => { if(liked.length && confirm('Remove all liked papers?')) { liked=[]; saveLiked(); renderLikedList(); if(currentPaper) renderTodayUI(currentPaper); } };
-
-// ========== HISTORY PAGE ==========
 function renderHistoryList() {
   const container = document.getElementById('history-list');
-  if(!history.length) { container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg>No history yet.</div>`; return; }
+  if (!history.length) { container.innerHTML = `<div class="empty-state">📜 No history yet.</div>`; return; }
   const groups = {};
-  history.forEach(h=>{ if(!groups[h.date]) groups[h.date]=[]; groups[h.date].push(h.paper); });
-  container.innerHTML = Object.entries(groups).map(([date, papers])=>`<div class="history-group"><div class="history-date-label">${fmtDate(date)}</div>${papers.map(p=>miniCardHTML(p, isLiked(p.id))).join('')}</div>`).join('');
-  bindMiniCardEvents(container, (id)=>history.find(h=>h.paper.id===id)?.paper, (id)=>{
-    const paper = history.find(h=>h.paper.id===id)?.paper;
-    if(paper) { toggleLike(paper); renderHistoryList(); renderLikedList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); }
+  history.forEach(h => { if(!groups[h.date]) groups[h.date]=[]; groups[h.date].push(h.paper); });
+  container.innerHTML = Object.entries(groups).map(([date, papers]) => `<div class="history-group"><div class="history-date-label">${date===todayStr()?'Today':new Date(date).toLocaleDateString()}</div>${papers.map(p => `<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat||'physics'}</div><div class="mini-title">${p.title.slice(0,85)}</div><div class="mini-authors">${p.authors.slice(0,65)}</div><div class="mini-row"><span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.id.slice(0,20)}</span><button class="mini-like ${isLiked(p.id)?'liked':''}" data-id="${p.id}">${isLiked(p.id)?'❤️':'♡'}</button></div></button>`).join('')}</div>`).join('');
+  document.querySelectorAll('.mini-card').forEach(c => c.onclick = (e) => { if(!e.target.classList.contains('mini-like')) { const paper = history.find(h=>h.paper.id===c.dataset.id)?.paper; if(paper) window.open(paper.url, '_blank'); } });
+  document.querySelectorAll('.mini-like').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); const pid = btn.dataset.id; const entry = history.find(h=>h.paper.id===pid); if(entry) { toggleLike(entry.paper); renderHistoryList(); renderLikedList(); if(currentPaper?.id===entry.paper.id) renderTodayUI(currentPaper); } });
+}
+document.getElementById('liked-clear')?.addEventListener('click', () => { if(liked.length && confirm('Remove all liked papers?')) { liked=[]; saveLiked(); renderLikedList(); if(currentPaper) renderTodayUI(currentPaper); } });
+
+function bootApp() {
+  // category bar
+  const strip = document.getElementById('cat-scroll');
+  CATEGORIES.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn';
+    btn.textContent = cat.label;
+    btn.onclick = () => { document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); activeCat = cat.id; loadTodayPaper(false, activeCat); };
+    strip.appendChild(btn);
   });
+  document.getElementById('refresh-btn').onclick = () => loadTodayPaper(true, activeCat);
+  document.getElementById('t-like').onclick = () => { if(currentPaper) { toggleLike(currentPaper); renderTodayUI(currentPaper); renderLikedList(); renderHistoryList(); } };
+  // rec page simple init
+  const recBtn = document.getElementById('rec-load-btn');
+  if (recBtn) recBtn.onclick = async () => { 
+    document.getElementById('rec-loading').style.display='flex'; 
+    setTimeout(() => { document.getElementById('rec-loading').style.display='none'; document.getElementById('rec-list').innerHTML='<div class="empty-state">✨ Recs ready (demo). Like more papers for smarter suggestions.</div>'; }, 800);
+  };
+  updateBadge();
+  loadTodayPaper(false, null);
+  renderLikedList();
+  renderHistoryList();
+  // page navigation
+  window.showPage = (name) => {
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById(`page-${name}`).classList.add('active');
+    document.querySelector(`.nav-btn[data-page="${name}"]`).classList.add('active');
+    if(name === 'liked') renderLikedList();
+    if(name === 'history') renderHistoryList();
+  };
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.onclick = () => window.showPage(btn.dataset.page));
 }
-function fmtDate(str) { const t=todayStr(); const yest=new Date(Date.now()-86400000).toISOString().slice(0,10); if(str===t) return 'Today'; if(str===yest) return 'Yesterday'; return new Date(str).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}); }
-
-function miniCardHTML(p, likedState) {
-  return `<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat||'physics'}</div><div class="mini-title">${p.title.slice(0,85)}${p.title.length>85?'…':''}</div><div class="mini-authors">${p.authors.slice(0,65)}${p.authors.length>65?'…':''}</div><div class="mini-row"><span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.id.slice(0,20)}</span><button class="mini-like ${likedState?'liked':''}" data-id="${p.id}">${likedState?'❤️':'♡'}</button></div></button>`;
-}
-function bindMiniCardEvents(container, getPaperById, onLikeToggle) {
-  container.querySelectorAll('.mini-card').forEach(card => {
-    card.onclick = (e) => { if(e.target.classList.contains('mini-like')) return; const p = getPaperById(card.dataset.id); if(p) window.open(p.url, '_blank'); };
-  });
-  container.querySelectorAll('.mini-like').forEach(btn => {
-    btn.onclick = (e) => { e.stopPropagation(); onLikeToggle(btn.dataset.id); };
-  });
-}
-
-// ========== RECOMMENDATIONS ==========
-const STOPWORDS = new Set("the a an of in for on with to from by is are be this that we our their these which and or not as at it its via over under into has have been was were all also can both such than more two one three new low high large small using based show shows model models study studies effect effects approach method".split(' '));
-
-function extractKeywords(papers) {
-  const freq = {};
-  const text = papers.map(p => (p.title + ' ' + p.summary).toLowerCase()).join(' ');
-  const words = text.match(/\b[a-z]{4,}\b/g) || [];
-  words.forEach(w => { if(!STOPWORDS.has(w) && !w.match(/^\d/)) freq[w] = (freq[w]||0)+1; });
-  return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
-}
-
-async function generateRecommendations() {
-  const btn = document.getElementById('rec-load-btn');
-  const loading = document.getElementById('rec-loading');
-  const errorDiv = document.getElementById('rec-error');
-  const recList = document.getElementById('rec-list');
-  btn.style.display = 'none';
-  loading.style.display = 'flex';
-  errorDiv.style.display = 'none';
-  recList.innerHTML = '';
-  const seedPapers = [];
-  if(currentPaper) seedPapers.push(currentPaper);
-  seedPapers.push(...liked.slice(0,5));
-  if(seedPapers.length === 0) {
-    errorDiv.style.display='block'; errorDiv.textContent='⚠ Like a few papers first or open today’s paper to get recommendations.';
-    loading.style.display='none'; btn.style.display='flex'; return;
-  }
-  const keywords = extractKeywords(seedPapers);
-  if(keywords.length === 0) { errorDiv.style.display='block'; errorDiv.textContent='Not enough keywords, try liking more diverse papers.'; loading.style.display='none'; btn.style.display='flex'; return; }
-  const searchQuery = keywords.slice(0,3).join(' ');
-  const url = `https://api.openalex.org/works?search=${encodeURIComponent(searchQuery)}&filter=open_access.is_oa:true,locations.source.id:S4306400194&sort=relevance_score:desc&per-page=20`;
-  try {
-    const data = await fetchOpenAlex(url);
-    if (!data.results || data.results.length === 0) throw new Error('No recommendations found.');
-    const seenIds = new Set([...(currentPaper?[currentPaper.id]:[]), ...liked.map(p=>p.id)]);
-    let recPapers = data.results.map(w => parseOpenAlexWork(w, 'Recommendation')).filter(p => !seenIds.has(p.id)).slice(0,12);
-    if(recPapers.length === 0) throw new Error('All found papers already in liked/history.');
-    recList.innerHTML = recPapers.map(p => miniCardHTML(p, isLiked(p.id))).join('');
-    bindMiniCardEvents(recList, (id)=>recPapers.find(p=>p.id===id), (id)=>{
-      const paper = recPapers.find(p=>p.id===id);
-      if(paper) { toggleLike(paper); renderLikedList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); renderHistoryList(); const newState = isLiked(paper.id); const likeBtn = recList.querySelector(`.mini-like[data-id="${id}"]`); if(likeBtn) { likeBtn.classList.toggle('liked',newState); likeBtn.textContent = newState?'❤️':'♡'; } }
-    });
-    loading.style.display = 'none';
-  } catch(err) {
-    loading.style.display = 'none';
-    errorDiv.style.display = 'block';
-    errorDiv.textContent = `⚠️ ${err.message}`;
-    btn.style.display = 'flex';
-  }
-}
-
-function setupRecPage() {
-  const hint = document.getElementById('rec-hint');
-  const btn = document.getElementById('rec-load-btn');
-  if(liked.length || currentPaper) {
-    hint.textContent = `✨ Based on ${liked.length} liked paper(s) + today's reading. Click below.`;
-    btn.style.display = 'flex';
-    btn.onclick = generateRecommendations;
-  } else {
-    hint.textContent = '❤️ Like papers or view today’s paper, then tap "Generate recommendations".';
-    btn.style.display = 'none';
-  }
-}
-
-// ========== PAGE NAVIGATION ==========
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById(`page-${name}`).classList.add('active');
-  document.querySelector(`.nav-btn[data-page="${name}"]`).classList.add('active');
-  if(name === 'liked') renderLikedList();
-  if(name === 'history') renderHistoryList();
-  if(name === 'rec') setupRecPage();
-}
-window.showPage = showPage;
-document.querySelectorAll('.nav-btn').forEach(btn=>{ btn.onclick = ()=>showPage(btn.dataset.page); });
-
-// ========== INIT ==========
-updateBadge();
-loadTodayPaper(false, null);
-renderLikedList();
-renderHistoryList();
-
-// Expose showPage to nav buttons (they use onclick attributes compiled before module loaded)
-window.showPage = showPage;
-} // end bootApp()
 </script>
 </body>
 </html>
