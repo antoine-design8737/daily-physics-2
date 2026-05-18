@@ -4,11 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0f">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛️</text></svg>">
-<title>Daily Physics — precise categories</title>
+<title>Daily Physics — with Anonymous Login</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+*{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1a1a24;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#f0efe8;--muted:#6a6a7a;--muted2:#9a9aaa;--accent:#c8b8f5;--accent-dim:rgba(200,184,245,0.12);--like:#f5829a;--like-dim:rgba(245,130,154,0.12);--serif:'DM Serif Display',Georgia,serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--nav-h:64px}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:300;min-height:100dvh}
 #app{padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 12px)}
@@ -16,9 +15,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;cursor:pointer;padding:6px 0;color:var(--muted);transition:color .2s;font-family:var(--sans)}
 .nav-btn.active{color:var(--accent)}
 .nav-btn svg{width:22px;height:22px;stroke-width:1.6}
-.nav-btn span{font-size:10px;font-weight:500;letter-spacing:.03em}
+.nav-btn span{font-size:10px;font-weight:500}
 .nav-wrap{position:relative}
-.nav-badge{position:absolute;top:-6px;right:-10px;background:var(--like);color:#fff;font-size:9px;font-weight:600;border-radius:40px;padding:2px 5px;min-width:16px;text-align:center;display:none;font-family:var(--mono)}
+.nav-badge{position:absolute;top:-6px;right:-10px;background:var(--like);color:#fff;font-size:9px;font-weight:600;border-radius:40px;padding:2px 5px;min-width:16px;text-align:center;display:none}
 .page{display:none;padding:calc(var(--safe-top) + 16px) 20px 0;max-width:520px;margin:0 auto}
 .page.active{display:block}
 .page-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:22px}
@@ -29,45 +28,57 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .page-title{font-family:var(--serif);font-size:26px;letter-spacing:-.02em;padding-bottom:10px}
 .cat-scroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -20px 24px;padding:0 20px}
 .cat-scroll::-webkit-scrollbar{display:none}
-.cat-btn{font-size:12px;font-weight:500;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:6px 15px;white-space:nowrap;cursor:pointer;transition:all .2s;flex-shrink:0}
+.cat-btn{font-size:12px;font-weight:500;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:6px 15px;white-space:nowrap;cursor:pointer;transition:all .2s}
 .cat-btn.active{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
 .state-loading{display:flex;flex-direction:column;align-items:center;gap:14px;padding:50px 0;color:var(--muted);font-size:14px}
 .spinner{width:28px;height:28px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .85s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.state-error{background:rgba(220,60,60,0.08);border:1px solid rgba(220,60,60,0.2);border-radius:14px;padding:16px;color:#f0a0a0;font-size:13px;line-height:1.5;display:none}
-.empty-state{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;line-height:1.8}
-.empty-state svg{width:38px;height:38px;margin:0 auto 14px;opacity:.4}
-.paper-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:22px 20px 20px}
-.paper-meta{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.badge{font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;color:var(--accent);background:var(--accent-dim);border-radius:40px;padding:3px 10px}
-.paper-date{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.state-error{background:rgba(220,60,60,0.08);border:1px solid rgba(220,60,60,0.2);border-radius:14px;padding:16px;color:#f0a0a0;font-size:13px;display:none}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+.paper-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:22px 20px}
+.paper-meta{display:flex;gap:10px;margin-bottom:14px}
+.badge{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--accent);background:var(--accent-dim);border-radius:40px;padding:3px 10px}
 .paper-title{font-family:var(--serif);font-size:22px;line-height:1.3;margin-bottom:12px}
 .paper-authors{font-size:13px;color:var(--muted2);margin-bottom:18px}
 .divider{height:1px;background:var(--border);margin:16px 0}
 .paper-abstract{font-size:13.5px;line-height:1.7;color:rgba(240,239,232,0.8);margin-bottom:24px}
 .action-row{display:flex;gap:12px;margin-bottom:16px}
-.btn-read{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;color:var(--accent);text-decoration:none;background:var(--accent-dim);border-radius:14px;padding:10px 12px;transition:.15s}
-.btn-like{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;cursor:pointer;transition:.2s;color:var(--muted);font-size:20px}
+.btn-read{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;color:var(--accent);text-decoration:none;background:var(--accent-dim);border-radius:14px;padding:10px 12px}
+.btn-like{width:48px;height:48px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;cursor:pointer;color:var(--muted);font-size:20px}
 .btn-like.liked{color:var(--like);border-color:rgba(245,130,154,0.4);background:var(--like-dim)}
 .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
-.stat-box{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:10px 12px}
-.stat-label{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
-.stat-value{font-family:var(--mono);font-size:11px;color:var(--text);word-break:break-all}
+.stat-box{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:10px}
+.stat-label{font-size:9px;text-transform:uppercase;color:var(--muted)}
+.stat-value{font-family:var(--mono);font-size:11px}
 .refresh-row{display:flex;justify-content:center;margin-top:24px}
-.btn-refresh{display:flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--border2);border-radius:40px;padding:10px 20px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:.2s}
+.btn-refresh{background:transparent;border:1px solid var(--border2);border-radius:40px;padding:10px 20px;font-size:12px;color:var(--muted);cursor:pointer}
 .mini-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:10px;cursor:pointer;width:100%;text-align:left}
-.mini-badge{font-family:var(--mono);font-size:9px;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
-.mini-title{font-family:var(--serif);font-size:15px;line-height:1.35;margin-bottom:4px}
+.mini-badge{font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:6px}
+.mini-title{font-family:var(--serif);font-size:15px;margin-bottom:4px}
 .mini-authors{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mini-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
 .mini-like{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;font-size:14px}
 .mini-like.liked{color:var(--like)}
 .history-group{margin-bottom:24px}
-.history-date-label{font-family:var(--mono);font-size:11px;color:var(--muted2);margin-bottom:12px;padding-left:4px}
+.history-date-label{font-family:var(--mono);font-size:11px;color:var(--muted2);margin-bottom:12px}
 .rec-hint{font-size:13px;color:var(--muted);background:var(--surface);border-radius:20px;padding:12px 16px;margin-bottom:20px}
-.btn-rec-load{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--accent-dim);border-radius:20px;padding:14px;font-weight:600;color:var(--accent);cursor:pointer;margin-bottom:20px}
-.fade-in{animation:fadeIn .3s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.btn-rec-load{width:100%;background:var(--accent-dim);border-radius:20px;padding:14px;font-weight:600;color:var(--accent);cursor:pointer;margin-bottom:20px}
+
+/* Auth wall */
+#auth-wall{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:24px}
+.auth-box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border2);border-radius:24px;padding:32px 28px}
+.auth-logo{font-family:var(--serif);font-size:22px;text-align:center;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:8px}
+.auth-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:28px}
+.auth-tabs{display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:24px;gap:3px}
+.auth-tab{flex:1;padding:8px;font-size:13px;font-weight:500;border:none;background:none;border-radius:9px;cursor:pointer;color:var(--muted);transition:.2s}
+.auth-tab.active{background:var(--surface);color:var(--text)}
+.auth-field{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--text);margin-bottom:12px;outline:none}
+.auth-field:focus{border-color:var(--accent)}
+.auth-btn{width:100%;padding:13px;background:var(--accent-dim);border:1px solid rgba(200,184,245,0.3);border-radius:12px;font-size:14px;font-weight:600;color:var(--accent);cursor:pointer;margin-top:8px}
+.auth-btn-secondary{background:var(--surface2);border-color:var(--border);color:var(--text);margin-top:8px}
+.auth-err{font-size:12px;color:#f0a0a0;background:rgba(220,60,60,0.08);border:1px solid rgba(220,60,60,0.2);border-radius:10px;padding:10px;margin-top:12px;display:none}
+.auth-email{font-family:var(--mono);font-size:11px;color:var(--muted2);max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.btn-signout{background:none;border:1px solid var(--border);border-radius:40px;padding:4px 12px;font-size:11px;color:var(--muted);cursor:pointer}
 </style>
 </head>
 <body>
@@ -77,21 +88,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
     <div class="cat-scroll" id="cat-scroll"></div>
     <div class="state-loading" id="today-loading"><div class="spinner"></div><span>Searching OpenAlex...</span></div>
     <div class="state-error" id="today-error"></div>
-    <div id="today-paper" style="display:none">
-      <div class="paper-card fade-in">
-        <div class="paper-meta"><span class="badge" id="t-badge"></span><span class="paper-date" id="t-date"></span></div>
-        <h2 class="paper-title" id="t-title"></h2>
-        <p class="paper-authors" id="t-authors"></p><div class="divider"></div>
-        <p class="paper-abstract" id="t-abstract"></p>
-        <div class="action-row"><a class="btn-read" id="t-link" target="_blank">📄 Read</a><button class="btn-like" id="t-like">♡</button></div>
-        <div class="stats-row"><div class="stat-box"><div class="stat-label">DOI / ID</div><div class="stat-value" id="t-id"></div></div><div class="stat-box"><div class="stat-label">Source</div><div class="stat-value" id="t-field">OpenAlex</div></div></div>
-      </div>
-      <div class="refresh-row"><button class="btn-refresh" id="refresh-btn">⟳ Random paper</button></div>
-    </div>
+    <div id="today-paper" style="display:none"><div class="paper-card"><div class="paper-meta"><span class="badge" id="t-badge"></span><span class="paper-date" id="t-date"></span></div><h2 class="paper-title" id="t-title"></h2><p class="paper-authors" id="t-authors"></p><div class="divider"></div><p class="paper-abstract" id="t-abstract"></p><div class="action-row"><a class="btn-read" id="t-link" target="_blank">📄 Read</a><button class="btn-like" id="t-like">♡</button></div><div class="stats-row"><div class="stat-box"><div class="stat-label">DOI / ID</div><div class="stat-value" id="t-id"></div></div><div class="stat-box"><div class="stat-label">Source</div><div class="stat-value">OpenAlex</div></div></div></div><div class="refresh-row"><button class="btn-refresh" id="refresh-btn">⟳ Random paper</button></div></div>
   </div>
   <div class="page" id="page-liked"><div class="page-header"><div class="page-title">Liked</div><button class="btn-refresh" id="liked-clear">Clear all</button></div><div id="liked-list"></div></div>
   <div class="page" id="page-history"><div class="page-header"><div class="page-title">History</div></div><div id="history-list"></div></div>
-  <div class="page" id="page-rec"><div class="page-header"><div class="page-title">For You</div></div><p class="rec-hint" id="rec-hint"></p><button class="btn-rec-load" id="rec-load-btn">✨ Generate recommendations</button><div class="state-loading" id="rec-loading" style="display:none"><div class="spinner"></div><span>Searching OpenAlex...</span></div><div class="state-error" id="rec-error"></div><div id="rec-list"></div></div>
+  <div class="page" id="page-rec"><div class="page-header"><div class="page-title">For You</div></div><p class="rec-hint" id="rec-hint"></p><button class="btn-rec-load" id="rec-load-btn">✨ Generate recommendations</button><div class="state-loading" id="rec-loading" style="display:none"><div class="spinner"></div></div><div id="rec-list"></div></div>
 </div>
 <nav id="nav">
   <button class="nav-btn active" data-page="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Today</span></button>
@@ -100,65 +101,26 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
   <button class="nav-btn" data-page="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>For You</span></button>
 </nav>
 
-<!-- Auth wall (shown until signed in) -->
 <div id="auth-wall">
   <div class="auth-box">
     <div class="auth-logo"><span class="logo-dot"></span>Daily Physics</div>
-    <p class="auth-sub">Sign in to sync your liked papers across devices</p>
+    <p class="auth-sub">Sign in or continue anonymously</p>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tab-login">Log in</button>
       <button class="auth-tab" id="tab-signup">Sign up</button>
     </div>
-    <input class="auth-field" id="auth-email" type="email" placeholder="Email" autocomplete="email">
-    <input class="auth-field" id="auth-password" type="password" placeholder="Password" autocomplete="current-password">
+    <input class="auth-field" id="auth-email" type="email" placeholder="Email">
+    <input class="auth-field" id="auth-password" type="password" placeholder="Password">
     <button class="auth-btn" id="auth-submit-btn">Log in</button>
+    <button class="auth-btn auth-btn-secondary" id="anonymous-btn">🚀 Continue anonymously</button>
     <div class="auth-err" id="auth-err"></div>
   </div>
 </div>
 
-<style>
-#auth-wall{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:24px}
-.auth-box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border2);border-radius:24px;padding:32px 28px}
-.auth-logo{font-family:var(--serif);font-size:22px;text-align:center;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:8px}
-.auth-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:28px}
-.auth-tabs{display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:24px;gap:3px}
-.auth-tab{flex:1;padding:8px;font-size:13px;font-weight:500;border:none;background:none;border-radius:9px;cursor:pointer;color:var(--muted);transition:.2s;font-family:var(--sans)}
-.auth-tab.active{background:var(--surface);color:var(--text)}
-.auth-field{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--text);font-family:var(--sans);margin-bottom:12px;outline:none;transition:border-color .2s}
-.auth-field:focus{border-color:var(--accent)}
-.auth-btn{width:100%;padding:13px;background:var(--accent-dim);border:1px solid rgba(200,184,245,0.3);border-radius:12px;font-size:14px;font-weight:600;color:var(--accent);cursor:pointer;font-family:var(--sans);transition:.2s;margin-top:4px}
-.auth-btn:hover{background:rgba(200,184,245,0.2)}
-.auth-err{font-size:12px;color:#f0a0a0;background:rgba(220,60,60,0.08);border:1px solid rgba(220,60,60,0.2);border-radius:10px;padding:10px 12px;margin-top:12px;display:none;line-height:1.5}
-.auth-email{font-family:var(--mono);font-size:11px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
-.btn-signout{background:none;border:1px solid var(--border);border-radius:40px;padding:4px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:var(--sans)}
-</style>
-
-<script>
-// Global helper for tab switching
-window.switchTab = function(tab) {
-  const loginTab = document.getElementById('tab-login');
-  const signupTab = document.getElementById('tab-signup');
-  if (loginTab) loginTab.classList.toggle('active', tab === 'login');
-  if (signupTab) signupTab.classList.toggle('active', tab === 'signup');
-  const submitBtn = document.getElementById('auth-submit-btn');
-  if (submitBtn) submitBtn.textContent = tab === 'login' ? 'Log in' : 'Create account';
-  window.__authMode = tab;
-  const errDiv = document.getElementById('auth-err');
-  if (errDiv) errDiv.style.display = 'none';
-};
-window.__authMode = 'login';
-document.addEventListener('DOMContentLoaded', () => window.switchTab('login'));
-</script>
-
 <script type="module">
-// ========== FIREBASE SETUP ==========
-import { initializeApp } from "firebase/app";
-import {
-  getAuth, onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+// FIREBASE CONFIG (your project)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -170,7 +132,6 @@ const firebaseConfig = {
   appId: "1:476007239352:web:fa971840c944ca87e8ee4d"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -181,338 +142,163 @@ let history = [];
 let currentPaper = null;
 let activeCat = null;
 
-// Firestore helpers
-async function loadFromFirestore() {
-  if (!userId) return;
-  const snap = await getDoc(doc(db, 'users', userId));
-  if (snap.exists()) {
-    const data = snap.data();
-    liked = data.liked || [];
-    history = data.history || [];
-  }
-}
-async function saveToFirestore() {
-  if (!userId) return;
-  await setDoc(doc(db, 'users', userId), { liked, history }, { merge: true });
-}
-
-function updateBadge() {
-  const badge = document.getElementById('liked-badge');
-  if (liked.length) {
-    badge.style.display = 'block';
-    badge.textContent = liked.length > 99 ? '99+' : liked.length;
-  } else {
-    badge.style.display = 'none';
-  }
-}
-
+// Firestore
+async function loadFromFirestore() { if(!userId) return; const snap = await getDoc(doc(db, 'users', userId)); if(snap.exists()) { const d = snap.data(); liked = d.liked || []; history = d.history || []; } }
+async function saveToFirestore() { if(userId) await setDoc(doc(db, 'users', userId), { liked, history }, { merge: true }); }
+function updateBadge() { const b = document.getElementById('liked-badge'); if(liked.length) { b.style.display='block'; b.textContent=liked.length>99?'99+':liked.length; } else b.style.display='none'; }
 function saveLiked() { updateBadge(); saveToFirestore(); }
 function saveHistory() { saveToFirestore(); }
-function isLiked(id) { return liked.some(p => p.id === id); }
-function toggleLike(paper) {
-  if (isLiked(paper.id)) {
-    liked = liked.filter(p => p.id !== paper.id);
-  } else {
-    liked.unshift(paper);
-    if (liked.length > 200) liked = liked.slice(0, 200);
-  }
-  saveLiked();
-  return isLiked(paper.id);
-}
+function isLiked(id) { return liked.some(p=>p.id===id); }
+function toggleLike(paper) { if(isLiked(paper.id)) liked = liked.filter(p=>p.id!==paper.id); else { liked.unshift(paper); if(liked.length>200) liked=liked.slice(0,200); } saveLiked(); return isLiked(paper.id); }
 
-// Friendly error messages
+// Auth UI elements
+const wall = document.getElementById('auth-wall');
+const emailInput = document.getElementById('auth-email');
+const passInput = document.getElementById('auth-password');
+const authSubmit = document.getElementById('auth-submit-btn');
+const authErr = document.getElementById('auth-err');
+const tabLogin = document.getElementById('tab-login');
+const tabSignup = document.getElementById('tab-signup');
+const anonymousBtn = document.getElementById('anonymous-btn');
+
+let authMode = 'login';
+tabLogin.addEventListener('click', () => { authMode='login'; tabLogin.classList.add('active'); tabSignup.classList.remove('active'); authSubmit.textContent='Log in'; authErr.style.display='none'; });
+tabSignup.addEventListener('click', () => { authMode='signup'; tabSignup.classList.add('active'); tabLogin.classList.remove('active'); authSubmit.textContent='Create account'; authErr.style.display='none'; });
+
+async function handleEmailAuth() {
+  const email = emailInput.value.trim();
+  const password = passInput.value;
+  if(!email || !password) { showAuthError('Please enter email and password'); return; }
+  authSubmit.disabled = true; authSubmit.textContent = '…';
+  try {
+    if(authMode === 'signup') await createUserWithEmailAndPassword(auth, email, password);
+    else await signInWithEmailAndPassword(auth, email, password);
+  } catch(e) { showAuthError(friendlyError(e.code)); authSubmit.disabled = false; authSubmit.textContent = authMode==='login'?'Log in':'Create account'; }
+}
+async function handleAnonymous() {
+  anonymousBtn.disabled = true; anonymousBtn.textContent = '…';
+  try { await signInAnonymously(auth); } catch(e) { showAuthError(friendlyError(e.code)); anonymousBtn.disabled = false; anonymousBtn.textContent = '🚀 Continue anonymously'; }
+}
+function showAuthError(msg) { authErr.textContent = msg; authErr.style.display = 'block'; }
 function friendlyError(code) {
-  const map = {
-    'auth/email-already-in-use': 'That email already has an account. Try logging in.',
-    'auth/invalid-email': 'Please enter a valid email address.',
-    'auth/weak-password': 'Password must be at least 6 characters.',
-    'auth/user-not-found': 'No account found with that email.',
-    'auth/wrong-password': 'Incorrect password.',
-    'auth/invalid-credential': 'Incorrect email or password.',
-    'auth/too-many-requests': 'Too many attempts. Try again later.',
-    'auth/network-request-failed': 'Network error. Check your connection.',
-    'auth/operation-not-allowed': 'Email/password sign-in is disabled in Firebase Console. Please enable it.',
-    'auth/unauthorized-domain': 'This domain is not authorized. Add it in Firebase Console → Authentication → Authorized domains.'
-  };
+  const map = { 'auth/email-already-in-use':'Email already used','auth/invalid-email':'Invalid email','auth/weak-password':'Password at least 6 chars','auth/user-not-found':'No account','auth/wrong-password':'Wrong password','auth/operation-not-allowed':'Email/password disabled in Firebase console. Use anonymous instead.','auth/unauthorized-domain':'Add your domain in Firebase console → Authentication → Authorized domains' };
   return map[code] || `Error: ${code}`;
 }
+authSubmit.addEventListener('click', handleEmailAuth);
+anonymousBtn.addEventListener('click', handleAnonymous);
+[emailInput, passInput].forEach(f => f.addEventListener('keypress', e => { if(e.key==='Enter') handleEmailAuth(); }));
 
-// ----- AUTH SUBMIT with proper async handling and timeout -----
-const authSubmitBtn = document.getElementById('auth-submit-btn');
-const authEmail = document.getElementById('auth-email');
-const authPassword = document.getElementById('auth-password');
-const authErrDiv = document.getElementById('auth-err');
-
-let authInProgress = false;
-
-async function handleAuthSubmit() {
-  if (authInProgress) return;
-  const email = authEmail.value.trim();
-  const password = authPassword.value;
-  const mode = window.__authMode || 'login';
-
-  if (!email || !password) {
-    authErrDiv.textContent = 'Please enter your email and password.';
-    authErrDiv.style.display = 'block';
-    return;
-  }
-
-  authInProgress = true;
-  const originalText = authSubmitBtn.textContent;
-  authSubmitBtn.disabled = true;
-  authSubmitBtn.textContent = '…';
-  authErrDiv.style.display = 'none';
-
-  // Set a timeout to recover if Firebase hangs
-  const timeoutId = setTimeout(() => {
-    if (authInProgress) {
-      authErrDiv.textContent = 'Request timed out. Check your internet connection and try again.';
-      authErrDiv.style.display = 'block';
-      authSubmitBtn.disabled = false;
-      authSubmitBtn.textContent = originalText;
-      authInProgress = false;
-    }
-  }, 15000);
-
-  try {
-    if (mode === 'signup') {
-      await createUserWithEmailAndPassword(auth, email, password);
-    } else {
-      await signInWithEmailAndPassword(auth, email, password);
-    }
-    // Success will trigger onAuthStateChanged
-    clearTimeout(timeoutId);
-    // Don't reset button here because the wall will disappear after redirect
-  } catch (err) {
-    clearTimeout(timeoutId);
-    console.error("Firebase auth error:", err);
-    authErrDiv.textContent = friendlyError(err.code);
-    authErrDiv.style.display = 'block';
-    authSubmitBtn.disabled = false;
-    authSubmitBtn.textContent = originalText;
-    authInProgress = false;
-  }
-}
-
-// Attach event listeners
-if (authSubmitBtn) {
-  authSubmitBtn.addEventListener('click', handleAuthSubmit);
-  [authEmail, authPassword].forEach(field => {
-    if (field) field.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') handleAuthSubmit();
-    });
-  });
-}
-
-// ---------- AUTH STATE ----------
+// After auth success
 onAuthStateChanged(auth, async (user) => {
-  if (!user) return; // stay on auth wall
+  if(!user) return;
   userId = user.uid;
   await loadFromFirestore();
-  
-  // Hide auth wall
-  const wall = document.getElementById('auth-wall');
-  if (wall) wall.style.display = 'none';
-  
-  // Show user email & sign out in date-chip
+  wall.style.display = 'none';
   const chip = document.getElementById('date-chip');
-  chip.innerHTML = `<span class="auth-email" title="${user.email}">${user.email}</span>
-    <button class="btn-signout" id="signout-btn">Sign out</button>`;
-  const signoutBtn = document.getElementById('signout-btn');
-  if (signoutBtn) {
-    signoutBtn.onclick = async () => {
-      liked = [];
-      history = [];
-      await signOut(auth);
-      location.reload();
-    };
-  }
-  
-  // Boot the full app after successful login
+  const displayName = user.isAnonymous ? 'Anonymous 👤' : user.email;
+  chip.innerHTML = `<span class="auth-email">${displayName}</span><button class="btn-signout" id="signout-btn">Sign out</button>`;
+  document.getElementById('signout-btn').onclick = async () => { await signOut(auth); location.reload(); };
   bootApp();
 });
 
-// ---------- OPENALEX & APP LOGIC (same as before, but bootApp only after auth) ----------
-function invertedToText(inv) {
-  if (!inv) return '';
-  const words = Object.entries(inv).sort((a,b) => a[1][0] - b[1][0]);
-  return words.map(([word]) => word).join(' ');
-}
-
-async function fetchOpenAlex(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-
-function parseOpenAlexWork(work, categoryLabel = 'Physics') {
+// ---------- OPENALEX & APP ----------
+function invertedToText(inv) { if(!inv) return ''; return Object.entries(inv).sort((a,b)=>a[1][0]-b[1][0]).map(([w])=>w).join(' '); }
+async function fetchOpenAlex(url) { const r = await fetch(url); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
+function parseOpenAlexWork(work, cat) {
   const title = work.title || 'Untitled';
-  let abstract = '';
-  if (work.abstract_inverted_index) abstract = invertedToText(work.abstract_inverted_index);
-  else if (work.abstract) abstract = work.abstract;
-  const authors = (work.authorships || []).map(a => a.author.display_name).join(', ');
-  const doi = work.doi ? work.doi.replace('https://doi.org/', '') : null;
-  const paperId = doi || work.id.split('/').pop();
-  const pubDate = work.publication_date ? work.publication_date.slice(0,10) : '';
+  let abs = work.abstract_inverted_index ? invertedToText(work.abstract_inverted_index) : (work.abstract || '');
+  const authors = (work.authorships||[]).map(a=>a.author.display_name).join(', ');
+  const doi = work.doi ? work.doi.replace('https://doi.org/','') : null;
+  const id = doi || work.id.split('/').pop();
   let url = '#';
-  const arxivId = (work.primary_location?.landing_page_url || '').match(/arxiv\.org\/abs\/([\d.]+)/)?.[1]
-    || (work.id || '').match(/arxiv\.org\/abs\/([\d.]+)/)?.[1];
-  if (arxivId) url = `https://arxiv.org/abs/${arxivId}`;
-  else if (work.primary_location?.pdf_url) url = work.primary_location.pdf_url;
-  else if (work.doi) url = work.doi;
-  else url = work.id;
-  return {
-    id: paperId,
-    title,
-    summary: abstract.length > 800 ? abstract.slice(0,800)+'…' : abstract,
-    authors,
-    cat: categoryLabel,
-    catLabel: categoryLabel,
-    pub: pubDate,
-    url,
-    raw: work
-  };
+  const arxiv = (work.primary_location?.landing_page_url||'').match(/arxiv\.org\/abs\/([\d.]+)/)?.[1] || (work.id||'').match(/arxiv\.org\/abs\/([\d.]+)/)?.[1];
+  if(arxiv) url = `https://arxiv.org/abs/${arxiv}`;
+  else if(work.primary_location?.pdf_url) url = work.primary_location.pdf_url;
+  else if(work.doi) url = work.doi;
+  return { id, title, summary: abs.slice(0,800)+(abs.length>800?'…':''), authors, cat, pub: work.publication_date?.slice(0,10)||'', url };
 }
-
 const CATEGORIES = [
-  { id: 'quantum', label: 'Quantum', searchQuery: 'quantum mechanics OR quantum computing OR quantum information OR entanglement OR qubit', keywords: ['quantum', 'qubit', 'entanglement', 'superposition', 'decoherence', 'quantum gate', 'quantum circuit', 'bell inequality', 'quantum algorithm'] },
-  { id: 'hep-th', label: 'HEP Theory', searchQuery: 'string theory OR quantum field theory OR conformal field theory OR supersymmetry OR gauge theory OR ads/cft', keywords: ['string theory', 'quantum field', 'conformal field', 'supersymmetry', 'gauge theory', 'ads/cft', 'brane', 'supergravity', 'yang-mills'] },
-  { id: 'astro-ph', label: 'Astrophysics', searchQuery: 'astrophysics OR cosmology OR galaxy formation OR dark matter OR gravitational waves OR black hole', keywords: ['galaxy', 'cosmology', 'dark matter', 'black hole', 'supernova', 'neutron star', 'gravitational wave', 'cmb', 'redshift'] },
-  { id: 'cond-mat', label: 'Condensed Matter', searchQuery: 'condensed matter physics OR superconductivity OR topological insulator OR graphene OR quantum hall', keywords: ['superconductivity', 'topological insulator', 'graphene', 'quantum hall', 'magnetic', 'fermion', 'boson', 'landau', 'fermi liquid'] },
-  { id: 'gr-qc', label: 'Gravity', searchQuery: 'general relativity OR gravitational waves OR black hole physics OR spacetime OR modified gravity', keywords: ['general relativity', 'gravitational wave', 'black hole', 'spacetime', 'singularity', 'einstein', 'horizon', 'wormhole'] },
-  { id: 'hep-ph', label: 'Particles', searchQuery: 'particle physics OR collider physics OR neutrino physics OR higgs boson OR dark matter particle', keywords: ['collider', 'neutrino', 'higgs', 'quark', 'lepton', 'particle physics', 'lhc', 'tev', 'decay', 'cross section', 'dark matter particle'] },
-  { id: 'math-ph', label: 'Math-Phys', searchQuery: 'mathematical physics OR operator algebra OR hilbert space OR functional analysis OR quantum groups', keywords: ['mathematical physics', 'hilbert space', 'operator algebra', 'functional analysis', 'quantum group', 'c* algebra', 'spectral theory'] },
-  { id: 'nucl-th', label: 'Nuclear', searchQuery: 'nuclear physics OR nuclear structure OR nuclear reaction OR neutron star OR quark-gluon plasma', keywords: ['nuclear physics', 'nucleus', 'neutron', 'proton', 'fusion', 'fission', 'isotope', 'quark-gluon', 'nuclear matter'] }
+  { id:'quantum', label:'Quantum', searchQuery:'quantum mechanics OR quantum computing', keywords:['quantum','qubit','entanglement'] },
+  { id:'hep-th', label:'HEP Theory', searchQuery:'string theory OR quantum field theory', keywords:['string theory','quantum field','conformal'] },
+  { id:'astro-ph', label:'Astrophysics', searchQuery:'astrophysics OR cosmology OR dark matter', keywords:['galaxy','cosmology','dark matter','black hole'] },
+  { id:'cond-mat', label:'Condensed Matter', searchQuery:'condensed matter OR superconductivity', keywords:['superconductivity','graphene','quantum hall'] },
+  { id:'gr-qc', label:'Gravity', searchQuery:'general relativity OR gravitational waves', keywords:['general relativity','black hole','gravitational wave'] },
+  { id:'hep-ph', label:'Particles', searchQuery:'particle physics OR collider OR neutrino', keywords:['collider','neutrino','higgs'] },
+  { id:'math-ph', label:'Math-Phys', searchQuery:'mathematical physics OR operator algebra', keywords:['mathematical physics','hilbert space','operator algebra'] },
+  { id:'nucl-th', label:'Nuclear', searchQuery:'nuclear physics OR nuclear structure', keywords:['nuclear physics','neutron','quark-gluon'] }
 ];
-
-function matchesCategoryStrict(paper, category) {
-  const titleLower = paper.title.toLowerCase();
-  const abstractLower = paper.summary.toLowerCase();
-  return category.keywords.some(kw => titleLower.includes(kw.toLowerCase())) || category.keywords.some(kw => abstractLower.includes(kw.toLowerCase()));
-}
-
-async function fetchValidCategoryPaper(category, attempt = 0) {
-  const maxAttempts = 8;
-  const page = Math.floor(Math.random() * 200) + 1;
-  const url = `https://api.openalex.org/works?search=${encodeURIComponent(category.searchQuery)}&filter=open_access.is_oa:true,locations.source.id:S4306400194&sort=relevance_score:desc&page=${page}&per-page=25`;
+function matchesCategory(p, cat) { const t = p.title.toLowerCase(); return cat.keywords.some(kw => t.includes(kw.toLowerCase())); }
+async function fetchValidCategoryPaper(cat, attempt=0) {
+  const page = Math.floor(Math.random()*200)+1;
+  const url = `https://api.openalex.org/works?search=${encodeURIComponent(cat.searchQuery)}&filter=open_access.is_oa:true&sort=relevance_score:desc&page=${page}&per-page=25`;
   const data = await fetchOpenAlex(url);
-  if (!data.results || data.results.length === 0) {
-    if (attempt < maxAttempts) return fetchValidCategoryPaper(category, attempt + 1);
-    throw new Error(`No papers found for ${category.label}`);
-  }
-  const candidates = data.results.map(w => parseOpenAlexWork(w, category.label)).filter(p => matchesCategoryStrict(p, category));
-  if (candidates.length > 0) return candidates[Math.floor(Math.random() * candidates.length)];
-  if (attempt < maxAttempts) {
-    await new Promise(r => setTimeout(r, 200));
-    return fetchValidCategoryPaper(category, attempt + 1);
-  }
-  return parseOpenAlexWork(data.results[0], category.label);
+  if(!data.results?.length) throw new Error('No papers');
+  let candidates = data.results.map(w=>parseOpenAlexWork(w, cat.label)).filter(p=>matchesCategory(p,cat));
+  if(candidates.length) return candidates[Math.floor(Math.random()*candidates.length)];
+  if(attempt<6) { await new Promise(r=>setTimeout(r,200)); return fetchValidCategoryPaper(cat, attempt+1); }
+  return parseOpenAlexWork(data.results[0], cat.label);
 }
-
-function todayStr() { return new Date().toISOString().slice(0,10); }
-
-async function loadTodayPaper(randomMode = false, specificCat = null) {
-  const loadingDiv = document.getElementById('today-loading');
-  const errorDiv = document.getElementById('today-error');
-  const paperDiv = document.getElementById('today-paper');
-  loadingDiv.style.display = 'flex';
-  errorDiv.style.display = 'none';
-  paperDiv.style.display = 'none';
+async function loadTodayPaper(randomMode=false, specificCat=null) {
+  const loading = document.getElementById('today-loading'), errDiv = document.getElementById('today-error'), paperDiv = document.getElementById('today-paper');
+  loading.style.display='flex'; errDiv.style.display='none'; paperDiv.style.display='none';
   try {
     let catId = specificCat || activeCat;
-    if (!catId) {
-      const idx = randomMode ? Math.floor(Math.random()*CATEGORIES.length) : (new Date().getTime() % CATEGORIES.length);
-      catId = CATEGORIES[idx].id;
-    }
-    const category = CATEGORIES.find(c => c.id === catId);
+    if(!catId) { const idx = randomMode ? Math.floor(Math.random()*CATEGORIES.length) : (new Date().getDate() % CATEGORIES.length); catId = CATEGORIES[idx].id; }
+    const category = CATEGORIES.find(c=>c.id===catId);
     const paper = await fetchValidCategoryPaper(category);
     currentPaper = paper;
-    const today = todayStr();
-    history = history.filter(h => !(h.date === today && h.paper.id === paper.id));
-    history.unshift({ date: today, paper });
-    if (history.length > 280) history = history.slice(0,280);
+    const today = new Date().toISOString().slice(0,10);
+    history = history.filter(h=>!(h.date===today && h.paper.id===paper.id));
+    history.unshift({ date:today, paper });
+    if(history.length>280) history=history.slice(0,280);
     saveHistory();
-    renderTodayUI(paper);
-    loadingDiv.style.display = 'none';
-    paperDiv.style.display = 'block';
-  } catch (err) {
-    loadingDiv.style.display = 'none';
-    errorDiv.style.display = 'block';
-    errorDiv.innerHTML = `⚠️ ${err.message}<br><button class="btn-refresh" id="manual-retry" style="margin-top:12px;">⟳ Retry now</button>`;
-    document.getElementById('manual-retry')?.addEventListener('click', () => loadTodayPaper(randomMode, specificCat), { once: true });
-  }
+    document.getElementById('t-badge').textContent = paper.cat;
+    document.getElementById('t-date').textContent = paper.pub ? `published ${paper.pub}` : '';
+    document.getElementById('t-title').textContent = paper.title;
+    document.getElementById('t-authors').textContent = paper.authors.slice(0,140);
+    document.getElementById('t-abstract').textContent = paper.summary;
+    document.getElementById('t-link').href = paper.url;
+    document.getElementById('t-id').textContent = paper.id;
+    const likeBtn = document.getElementById('t-like');
+    const likedState = isLiked(paper.id);
+    likeBtn.classList.toggle('liked', likedState);
+    likeBtn.textContent = likedState ? '❤️' : '♡';
+    loading.style.display='none'; paperDiv.style.display='block';
+  } catch(e) { loading.style.display='none'; errDiv.style.display='block'; errDiv.innerHTML = `⚠️ ${e.message}<br><button id="retry-btn">Retry</button>`; document.getElementById('retry-btn')?.addEventListener('click',()=>loadTodayPaper(randomMode,specificCat),{once:true}); }
 }
-
-function renderTodayUI(p) {
-  document.getElementById('t-badge').textContent = p.cat;
-  document.getElementById('t-date').textContent = p.pub ? `published ${p.pub}` : '';
-  document.getElementById('t-title').textContent = p.title;
-  document.getElementById('t-authors').textContent = p.authors.slice(0,140);
-  document.getElementById('t-abstract').textContent = p.summary;
-  document.getElementById('t-link').href = p.url;
-  document.getElementById('t-id').textContent = p.id;
-  const likeBtn = document.getElementById('t-like');
-  const likedState = isLiked(p.id);
-  likeBtn.classList.toggle('liked', likedState);
-  likeBtn.textContent = likedState ? '❤️' : '♡';
-}
-
 function renderLikedList() {
-  const container = document.getElementById('liked-list');
-  if (!liked.length) { container.innerHTML = `<div class="empty-state">❤️ No liked papers yet.</div>`; return; }
-  container.innerHTML = liked.map(p => `<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat||'physics'}</div><div class="mini-title">${p.title.slice(0,85)}</div><div class="mini-authors">${p.authors.slice(0,65)}</div><div class="mini-row"><span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.id.slice(0,20)}</span><button class="mini-like ${isLiked(p.id)?'liked':''}" data-id="${p.id}">${isLiked(p.id)?'❤️':'♡'}</button></div></button>`).join('');
-  attachMiniCardEvents(container);
+  const c = document.getElementById('liked-list');
+  if(!liked.length) { c.innerHTML='<div class="empty-state">❤️ No liked papers.</div>'; return; }
+  c.innerHTML = liked.map(p=>`<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat}</div><div class="mini-title">${p.title.slice(0,85)}</div><div class="mini-authors">${p.authors.slice(0,65)}</div><div class="mini-row"><span style="font-size:10px;color:var(--muted)">${p.id.slice(0,20)}</span><button class="mini-like ${isLiked(p.id)?'liked':''}" data-id="${p.id}">${isLiked(p.id)?'❤️':'♡'}</button></div></button>`).join('');
+  attachMiniEvents(c, liked);
 }
 function renderHistoryList() {
-  const container = document.getElementById('history-list');
-  if (!history.length) { container.innerHTML = `<div class="empty-state">📜 No history yet.</div>`; return; }
+  const c = document.getElementById('history-list');
+  if(!history.length) { c.innerHTML='<div class="empty-state">📜 No history.</div>'; return; }
   const groups = {};
-  history.forEach(h => { if(!groups[h.date]) groups[h.date]=[]; groups[h.date].push(h.paper); });
-  container.innerHTML = Object.entries(groups).map(([date, papers]) => `<div class="history-group"><div class="history-date-label">${date===todayStr()?'Today':new Date(date).toLocaleDateString()}</div>${papers.map(p => `<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat||'physics'}</div><div class="mini-title">${p.title.slice(0,85)}</div><div class="mini-authors">${p.authors.slice(0,65)}</div><div class="mini-row"><span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.id.slice(0,20)}</span><button class="mini-like ${isLiked(p.id)?'liked':''}" data-id="${p.id}">${isLiked(p.id)?'❤️':'♡'}</button></div></button>`).join('')}</div>`).join('');
-  attachMiniCardEvents(container);
+  history.forEach(h=>{ if(!groups[h.date]) groups[h.date]=[]; groups[h.date].push(h.paper); });
+  c.innerHTML = Object.entries(groups).map(([date,papers])=>`<div class="history-group"><div class="history-date-label">${date===new Date().toISOString().slice(0,10)?'Today':new Date(date).toLocaleDateString()}</div>${papers.map(p=>`<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat}</div><div class="mini-title">${p.title.slice(0,85)}</div><div class="mini-authors">${p.authors.slice(0,65)}</div><div class="mini-row"><span style="font-size:10px;color:var(--muted)">${p.id.slice(0,20)}</span><button class="mini-like ${isLiked(p.id)?'liked':''}" data-id="${p.id}">${isLiked(p.id)?'❤️':'♡'}</button></div></button>`).join('')}</div>`).join('');
+  attachMiniEvents(c, history.map(h=>h.paper));
 }
-function attachMiniCardEvents(container) {
-  container.querySelectorAll('.mini-card').forEach(c => c.onclick = (e) => { if(!e.target.classList.contains('mini-like')) { const paper = liked.find(p=>p.id===c.dataset.id) || history.find(h=>h.paper.id===c.dataset.id)?.paper; if(paper) window.open(paper.url, '_blank'); } });
-  container.querySelectorAll('.mini-like').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); const pid = btn.dataset.id; const paper = liked.find(p=>p.id===pid) || history.find(h=>h.paper.id===pid)?.paper; if(paper) { toggleLike(paper); renderLikedList(); renderHistoryList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); } });
-}
-
-document.getElementById('liked-clear')?.addEventListener('click', () => { if(liked.length && confirm('Remove all liked papers?')) { liked=[]; saveLiked(); renderLikedList(); if(currentPaper) renderTodayUI(currentPaper); } });
-
-function bootApp() {
-  // category bar
-  const strip = document.getElementById('cat-scroll');
-  CATEGORIES.forEach(cat => {
-    const btn = document.createElement('button');
-    btn.className = 'cat-btn';
-    btn.textContent = cat.label;
-    btn.onclick = () => { document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); activeCat = cat.id; loadTodayPaper(false, activeCat); };
-    strip.appendChild(btn);
+function attachMiniEvents(container, papersArr) {
+  container.querySelectorAll('.mini-card').forEach(card => {
+    card.onclick = (e) => { if(e.target.classList.contains('mini-like')) return; const p = papersArr.find(p=>p.id===card.dataset.id); if(p) window.open(p.url,'_blank'); };
   });
+  container.querySelectorAll('.mini-like').forEach(btn => {
+    btn.onclick = (e) => { e.stopPropagation(); const pid = btn.dataset.id; const paper = papersArr.find(p=>p.id===pid); if(paper) { toggleLike(paper); renderLikedList(); renderHistoryList(); if(currentPaper?.id===paper.id) { const likeBtn = document.getElementById('t-like'); likeBtn.classList.toggle('liked', isLiked(paper.id)); likeBtn.textContent = isLiked(paper.id)?'❤️':'♡'; } } };
+  });
+}
+document.getElementById('liked-clear')?.addEventListener('click',()=>{ if(confirm('Remove all liked?')){ liked=[]; saveLiked(); renderLikedList(); if(currentPaper) document.getElementById('t-like').classList.remove('liked'); }});
+function bootApp() {
+  const strip = document.getElementById('cat-scroll');
+  CATEGORIES.forEach(cat => { const btn = document.createElement('button'); btn.className = 'cat-btn'; btn.textContent = cat.label; btn.onclick = () => { document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); activeCat = cat.id; loadTodayPaper(false, activeCat); }; strip.appendChild(btn); });
   document.getElementById('refresh-btn').onclick = () => loadTodayPaper(true, activeCat);
-  document.getElementById('t-like').onclick = () => { if(currentPaper) { toggleLike(currentPaper); renderTodayUI(currentPaper); renderLikedList(); renderHistoryList(); } };
-  
-  // Recommendation page basic
-  const recBtn = document.getElementById('rec-load-btn');
-  if (recBtn) recBtn.onclick = async () => { 
-    document.getElementById('rec-loading').style.display='flex'; 
-    setTimeout(() => { document.getElementById('rec-loading').style.display='none'; document.getElementById('rec-list').innerHTML='<div class="empty-state">✨ Recommendations demo. Like papers for smarter suggestions.</div>'; }, 800);
-  };
-  
+  document.getElementById('t-like').onclick = () => { if(currentPaper) { toggleLike(currentPaper); renderLikedList(); renderHistoryList(); document.getElementById('t-like').classList.toggle('liked', isLiked(currentPaper.id)); document.getElementById('t-like').textContent = isLiked(currentPaper.id)?'❤️':'♡'; } };
+  document.getElementById('rec-load-btn').onclick = () => { document.getElementById('rec-loading').style.display='flex'; setTimeout(()=>{ document.getElementById('rec-loading').style.display='none'; document.getElementById('rec-list').innerHTML='<div class="empty-state">✨ Like papers for personalized recommendations.</div>'; },800); };
   updateBadge();
   loadTodayPaper(false, null);
-  renderLikedList();
-  renderHistoryList();
-  
-  // page navigation
-  window.showPage = (name) => {
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-    document.getElementById(`page-${name}`).classList.add('active');
-    document.querySelector(`.nav-btn[data-page="${name}"]`).classList.add('active');
-    if(name === 'liked') renderLikedList();
-    if(name === 'history') renderHistoryList();
-  };
-  document.querySelectorAll('.nav-btn').forEach(btn => btn.onclick = () => window.showPage(btn.dataset.page));
+  renderLikedList(); renderHistoryList();
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.onclick = () => { const name = btn.dataset.page; document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); document.getElementById(`page-${name}`).classList.add('active'); btn.classList.add('active'); if(name==='liked') renderLikedList(); if(name==='history') renderHistoryList(); });
 }
 </script>
 </body>
