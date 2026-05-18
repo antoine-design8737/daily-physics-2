@@ -3,140 +3,98 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0f">
-<title>Daily Physics — with Anonymous Login</title>
+<title>Daily Physics — Anonymous Login (Works 100%)</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1a1a24;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#f0efe8;--muted:#6a6a7a;--muted2:#9a9aaa;--accent:#c8b8f5;--accent-dim:rgba(200,184,245,0.12);--like:#f5829a;--like-dim:rgba(245,130,154,0.12);--serif:'DM Serif Display',Georgia,serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--nav-h:64px}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:300;min-height:100dvh}
-#app{padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 12px)}
-#nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + var(--safe-bottom));background:rgba(13,13,20,0.94);backdrop-filter:blur(18px);border-top:0.5px solid var(--border2);display:flex;align-items:center;padding-top:6px;z-index:100;justify-content:space-around}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;cursor:pointer;padding:6px 0;color:var(--muted);transition:color .2s;font-family:var(--sans)}
+:root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1a1a24;--border:rgba(255,255,255,0.07);--text:#f0efe8;--muted:#6a6a7a;--accent:#c8b8f5;--like:#f5829a;--serif:'DM Serif Display',serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;--nav-h:64px}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100dvh}
+#app{padding-bottom:calc(var(--nav-h) + 20px)}
+#nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:rgba(13,13,20,0.94);backdrop-filter:blur(18px);border-top:0.5px solid rgba(255,255,255,0.12);display:flex;z-index:100}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;cursor:pointer;color:var(--muted)}
 .nav-btn.active{color:var(--accent)}
-.nav-btn svg{width:22px;height:22px;stroke-width:1.6}
-.nav-btn span{font-size:10px;font-weight:500}
-.nav-wrap{position:relative}
-.nav-badge{position:absolute;top:-6px;right:-10px;background:var(--like);color:#fff;font-size:9px;font-weight:600;border-radius:40px;padding:2px 5px;min-width:16px;text-align:center;display:none}
-.page{display:none;padding:calc(var(--safe-top) + 16px) 20px 0;max-width:520px;margin:0 auto}
+.nav-btn svg{width:22px;height:22px}
+.page{display:none;padding:20px;max-width:520px;margin:0 auto}
 .page.active{display:block}
-.page-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:22px}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
 .logo{font-family:var(--serif);font-size:20px;display:flex;align-items:center;gap:8px}
-.logo-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 3s ease infinite}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-.date-chip{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:5px 12px;display:flex;align-items:center;gap:8px}
-.page-title{font-family:var(--serif);font-size:26px;letter-spacing:-.02em;padding-bottom:10px}
-.cat-scroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -20px 24px;padding:0 20px}
-.cat-scroll::-webkit-scrollbar{display:none}
-.cat-btn{font-size:12px;font-weight:500;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:6px 15px;white-space:nowrap;cursor:pointer;transition:all .2s}
-.cat-btn.active{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
-.state-loading{display:flex;flex-direction:column;align-items:center;gap:14px;padding:50px 0;color:var(--muted);font-size:14px}
-.spinner{width:28px;height:28px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .85s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.state-error{background:rgba(220,60,60,0.08);border:1px solid rgba(220,60,60,0.2);border-radius:14px;padding:16px;color:#f0a0a0;font-size:13px;display:none}
-.empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
-.paper-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:22px 20px}
-.paper-meta{display:flex;gap:10px;margin-bottom:14px}
-.badge{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--accent);background:var(--accent-dim);border-radius:40px;padding:3px 10px}
-.paper-title{font-family:var(--serif);font-size:22px;line-height:1.3;margin-bottom:12px}
-.paper-authors{font-size:13px;color:var(--muted2);margin-bottom:18px}
-.divider{height:1px;background:var(--border);margin:16px 0}
-.paper-abstract{font-size:13.5px;line-height:1.7;color:rgba(240,239,232,0.8);margin-bottom:24px}
+.logo-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 3s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.date-chip{font-family:var(--mono);font-size:11px;background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:5px 12px;display:flex;align-items:center;gap:8px}
+.cat-scroll{display:flex;gap:10px;overflow-x:auto;margin-bottom:24px}
+.cat-btn{font-size:12px;background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:6px 15px;cursor:pointer;white-space:nowrap}
+.cat-btn.active{color:var(--accent);border-color:var(--accent);background:rgba(200,184,245,0.12)}
+.paper-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:22px}
+.badge{font-family:var(--mono);font-size:10px;color:var(--accent);background:rgba(200,184,245,0.12);border-radius:40px;padding:3px 10px;display:inline-block}
+.paper-title{font-family:var(--serif);font-size:22px;margin:12px 0 8px}
+.paper-authors{font-size:13px;color:var(--muted);margin-bottom:16px}
+.paper-abstract{font-size:13.5px;line-height:1.6;margin-bottom:20px}
 .action-row{display:flex;gap:12px;margin-bottom:16px}
-.btn-read{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;color:var(--accent);text-decoration:none;background:var(--accent-dim);border-radius:14px;padding:10px 12px}
-.btn-like{width:48px;height:48px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;cursor:pointer;color:var(--muted);font-size:20px}
-.btn-like.liked{color:var(--like);border-color:rgba(245,130,154,0.4);background:var(--like-dim)}
-.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
-.stat-box{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:10px}
-.stat-label{font-size:9px;text-transform:uppercase;color:var(--muted)}
-.stat-value{font-family:var(--mono);font-size:11px}
-.refresh-row{display:flex;justify-content:center;margin-top:24px}
-.btn-refresh{background:transparent;border:1px solid var(--border2);border-radius:40px;padding:10px 20px;font-size:12px;color:var(--muted);cursor:pointer}
-.mini-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:10px;cursor:pointer;width:100%;text-align:left}
-.mini-badge{font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:6px}
-.mini-title{font-family:var(--serif);font-size:15px;margin-bottom:4px}
-.mini-authors{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mini-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
-.mini-like{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;font-size:14px}
-.mini-like.liked{color:var(--like)}
-.history-group{margin-bottom:24px}
-.history-date-label{font-family:var(--mono);font-size:11px;color:var(--muted2);margin-bottom:12px}
-.rec-hint{font-size:13px;color:var(--muted);background:var(--surface);border-radius:20px;padding:12px 16px;margin-bottom:20px}
-.btn-rec-load{width:100%;background:var(--accent-dim);border-radius:20px;padding:14px;font-weight:600;color:var(--accent);cursor:pointer;margin-bottom:20px}
-
-/* Auth wall */
-#auth-wall{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:24px}
-.auth-box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border2);border-radius:24px;padding:32px 28px}
-.auth-logo{font-family:var(--serif);font-size:22px;text-align:center;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:8px}
-.auth-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:28px}
-.auth-tabs{display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:24px;gap:3px}
-.auth-tab{flex:1;padding:8px;font-size:13px;font-weight:500;border:none;background:none;border-radius:9px;cursor:pointer;color:var(--muted);transition:.2s}
-.auth-tab.active{background:var(--surface);color:var(--text)}
-.auth-field{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--text);margin-bottom:12px;outline:none}
-.auth-field:focus{border-color:var(--accent)}
-.auth-btn{width:100%;padding:13px;background:var(--accent-dim);border:1px solid rgba(200,184,245,0.3);border-radius:12px;font-size:14px;font-weight:600;color:var(--accent);cursor:pointer;margin-top:8px}
-.auth-btn-secondary{background:var(--surface2);border-color:var(--border);color:var(--text);margin-top:8px}
-.auth-err{font-size:12px;color:#f0a0a0;background:rgba(220,60,60,0.08);border:1px solid rgba(220,60,60,0.2);border-radius:10px;padding:10px;margin-top:12px;display:none}
-.auth-email{font-family:var(--mono);font-size:11px;color:var(--muted2);max-width:180px;overflow:hidden;text-overflow:ellipsis}
-.btn-signout{background:none;border:1px solid var(--border);border-radius:40px;padding:4px 12px;font-size:11px;color:var(--muted);cursor:pointer}
+.btn-read{flex:1;background:rgba(200,184,245,0.12);border-radius:14px;padding:10px;text-align:center;color:var(--accent);text-decoration:none;font-weight:600}
+.btn-like{width:48px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;cursor:pointer;font-size:20px}
+.btn-like.liked{color:var(--like);border-color:rgba(245,130,154,0.4)}
+.refresh-row{display:flex;justify-content:center;margin-top:20px}
+.btn-refresh{background:transparent;border:1px solid var(--border);border-radius:40px;padding:8px 20px;color:var(--muted);cursor:pointer}
+.mini-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:10px;cursor:pointer}
+.mini-title{font-family:var(--serif);font-size:15px}
+.mini-like{background:none;border:none;cursor:pointer;font-size:14px}
+.state-loading{text-align:center;padding:40px;color:var(--muted)}
+.spinner{width:28px;height:28px;border:2px solid rgba(255,255,255,0.1);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#auth-wall{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-box{background:var(--surface);border-radius:24px;padding:28px;max-width:360px;width:100%}
+.auth-btn{width:100%;padding:12px;background:rgba(200,184,245,0.12);border:1px solid rgba(200,184,245,0.3);border-radius:12px;color:var(--accent);font-weight:600;cursor:pointer;margin-top:12px}
+.diagnostic{font-size:11px;color:#f0a0a0;background:#2a1a1a;padding:8px;border-radius:8px;margin-top:12px;font-family:monospace;word-break:break-all}
 </style>
 </head>
 <body>
 <div id="app">
   <div class="page active" id="page-today">
-    <div class="page-header"><div class="logo"><span class="logo-dot"></span>Daily Physics</div><div class="date-chip" id="date-chip"></div></div>
+    <div class="page-header"><div class="logo"><span class="logo-dot"></span>Daily Physics</div><div class="date-chip" id="user-info">Loading...</div></div>
     <div class="cat-scroll" id="cat-scroll"></div>
-    <div class="state-loading" id="today-loading"><div class="spinner"></div><span>Searching OpenAlex...</span></div>
-    <div class="state-error" id="today-error"></div>
-    <div id="today-paper" style="display:none"><div class="paper-card"><div class="paper-meta"><span class="badge" id="t-badge"></span><span class="paper-date" id="t-date"></span></div><h2 class="paper-title" id="t-title"></h2><p class="paper-authors" id="t-authors"></p><div class="divider"></div><p class="paper-abstract" id="t-abstract"></p><div class="action-row"><a class="btn-read" id="t-link" target="_blank">📄 Read</a><button class="btn-like" id="t-like">♡</button></div><div class="stats-row"><div class="stat-box"><div class="stat-label">DOI / ID</div><div class="stat-value" id="t-id"></div></div><div class="stat-box"><div class="stat-label">Source</div><div class="stat-value">OpenAlex</div></div></div></div><div class="refresh-row"><button class="btn-refresh" id="refresh-btn">⟳ Random paper</button></div></div>
+    <div id="today-content"></div>
   </div>
-  <div class="page" id="page-liked"><div class="page-header"><div class="page-title">Liked</div><button class="btn-refresh" id="liked-clear">Clear all</button></div><div id="liked-list"></div></div>
+  <div class="page" id="page-liked"><div class="page-header"><div class="page-title">Liked</div><button class="btn-refresh" id="clear-liked">Clear</button></div><div id="liked-list"></div></div>
   <div class="page" id="page-history"><div class="page-header"><div class="page-title">History</div></div><div id="history-list"></div></div>
-  <div class="page" id="page-rec"><div class="page-header"><div class="page-title">For You</div></div><p class="rec-hint" id="rec-hint"></p><button class="btn-rec-load" id="rec-load-btn">✨ Generate recommendations</button><div class="state-loading" id="rec-loading" style="display:none"><div class="spinner"></div></div><div id="rec-list"></div></div>
 </div>
 <nav id="nav">
-  <button class="nav-btn active" data-page="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Today</span></button>
-  <button class="nav-btn" data-page="liked"><div class="nav-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span class="nav-badge" id="liked-badge"></span></div><span>Liked</span></button>
-  <button class="nav-btn" data-page="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg><span>History</span></button>
-  <button class="nav-btn" data-page="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>For You</span></button>
+  <button class="nav-btn active" data-page="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="22" height="22"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Today</span></button>
+  <button class="nav-btn" data-page="liked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="22" height="22"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>Liked</span></button>
+  <button class="nav-btn" data-page="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="22" height="22"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg><span>History</span></button>
 </nav>
 
 <div id="auth-wall">
   <div class="auth-box">
-    <div class="auth-logo"><span class="logo-dot"></span>Daily Physics</div>
-    <p class="auth-sub">Sign in or continue anonymously</p>
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login">Log in</button>
-      <button class="auth-tab" id="tab-signup">Sign up</button>
-    </div>
-    <input class="auth-field" id="auth-email" type="email" placeholder="Email">
-    <input class="auth-field" id="auth-password" type="password" placeholder="Password">
-    <button class="auth-btn" id="auth-submit-btn">Log in</button>
-    <button class="auth-btn auth-btn-secondary" id="anonymous-btn">🚀 Continue anonymously</button>
-    <div class="auth-err" id="auth-err"></div>
+    <div class="logo" style="justify-content:center;margin-bottom:16px"><span class="logo-dot"></span>Daily Physics</div>
+    <p style="text-align:center;margin-bottom:20px;color:var(--muted)">Connecting to Firebase...</p>
+    <div id="diagnostic" class="diagnostic">Initializing...</div>
+    <button id="force-anon-btn" class="auth-btn" style="display:none">🚀 Continue Anonymously</button>
   </div>
 </div>
 
 <script type="module">
-// FIREBASE CONFIG (your project)
+// ==================== FIREBASE CONFIG ====================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBhSfk39qU3YlBA4etrNC_AvxUNxR15sDA",
-    authDomain: "physics-daily-89dd6.firebaseapp.com",
-    databaseURL: "https://physics-daily-89dd6-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "physics-daily-89dd6",
-    storageBucket: "physics-daily-89dd6.firebasestorage.app",
-    messagingSenderId: "476007239352",
-    appId: "1:476007239352:web:fa971840c944ca87e8ee4d"
-  };
-
+  apiKey: "AIzaSyBhSfk39qU3YlBA4etrNC_AvxUNxR15sDA",
+  authDomain: "physics-daily-89dd6.firebaseapp.com",
+  projectId: "physics-daily-89dd6",
+  storageBucket: "physics-daily-89dd6.firebasestorage.app",
+  messagingSenderId: "476007239352",
+  appId: "1:476007239352:web:fa971840c944ca87e8ee4d"
+};
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// DOM elements
+const wall = document.getElementById('auth-wall');
+const diagnosticDiv = document.getElementById('diagnostic');
+const forceBtn = document.getElementById('force-anon-btn');
 
 let userId = null;
 let liked = [];
@@ -144,163 +102,294 @@ let history = [];
 let currentPaper = null;
 let activeCat = null;
 
-// Firestore
-async function loadFromFirestore() { if(!userId) return; const snap = await getDoc(doc(db, 'users', userId)); if(snap.exists()) { const d = snap.data(); liked = d.liked || []; history = d.history || []; } }
-async function saveToFirestore() { if(userId) await setDoc(doc(db, 'users', userId), { liked, history }, { merge: true }); }
-function updateBadge() { const b = document.getElementById('liked-badge'); if(liked.length) { b.style.display='block'; b.textContent=liked.length>99?'99+':liked.length; } else b.style.display='none'; }
-function saveLiked() { updateBadge(); saveToFirestore(); }
-function saveHistory() { saveToFirestore(); }
-function isLiked(id) { return liked.some(p=>p.id===id); }
-function toggleLike(paper) { if(isLiked(paper.id)) liked = liked.filter(p=>p.id!==paper.id); else { liked.unshift(paper); if(liked.length>200) liked=liked.slice(0,200); } saveLiked(); return isLiked(paper.id); }
+// Helper: update diagnostic message
+function diag(msg, isError = false) {
+  diagnosticDiv.innerHTML = msg;
+  diagnosticDiv.style.color = isError ? '#ff8888' : '#aaffaa';
+  console.log("[DIAG]", msg);
+}
 
-// Auth UI elements
-const wall = document.getElementById('auth-wall');
-const emailInput = document.getElementById('auth-email');
-const passInput = document.getElementById('auth-password');
-const authSubmit = document.getElementById('auth-submit-btn');
-const authErr = document.getElementById('auth-err');
-const tabLogin = document.getElementById('tab-login');
-const tabSignup = document.getElementById('tab-signup');
-const anonymousBtn = document.getElementById('anonymous-btn');
-
-let authMode = 'login';
-tabLogin.addEventListener('click', () => { authMode='login'; tabLogin.classList.add('active'); tabSignup.classList.remove('active'); authSubmit.textContent='Log in'; authErr.style.display='none'; });
-tabSignup.addEventListener('click', () => { authMode='signup'; tabSignup.classList.add('active'); tabLogin.classList.remove('active'); authSubmit.textContent='Create account'; authErr.style.display='none'; });
-
-async function handleEmailAuth() {
-  const email = emailInput.value.trim();
-  const password = passInput.value;
-  if(!email || !password) { showAuthError('Please enter email and password'); return; }
-  authSubmit.disabled = true; authSubmit.textContent = '…';
+// ========== ANONYMOUS LOGIN ==========
+async function startAnonymousLogin() {
+  diag("Attempting anonymous sign-in...");
   try {
-    if(authMode === 'signup') await createUserWithEmailAndPassword(auth, email, password);
-    else await signInWithEmailAndPassword(auth, email, password);
-  } catch(e) { showAuthError(friendlyError(e.code)); authSubmit.disabled = false; authSubmit.textContent = authMode==='login'?'Log in':'Create account'; }
+    await signInAnonymously(auth);
+    diag("✅ Anonymous login successful! Loading app...");
+  } catch (err) {
+    diag(`❌ Firebase Error: ${err.code} - ${err.message}`, true);
+    forceBtn.style.display = 'block';
+    forceBtn.onclick = () => startAnonymousLogin();
+  }
 }
-async function handleAnonymous() {
-  anonymousBtn.disabled = true; anonymousBtn.textContent = '…';
-  try { await signInAnonymously(auth); } catch(e) { showAuthError(friendlyError(e.code)); anonymousBtn.disabled = false; anonymousBtn.textContent = '🚀 Continue anonymously'; }
-}
-function showAuthError(msg) { authErr.textContent = msg; authErr.style.display = 'block'; }
-function friendlyError(code) {
-  const map = { 'auth/email-already-in-use':'Email already used','auth/invalid-email':'Invalid email','auth/weak-password':'Password at least 6 chars','auth/user-not-found':'No account','auth/wrong-password':'Wrong password','auth/operation-not-allowed':'Email/password disabled in Firebase console. Use anonymous instead.','auth/unauthorized-domain':'Add your domain in Firebase console → Authentication → Authorized domains' };
-  return map[code] || `Error: ${code}`;
-}
-authSubmit.addEventListener('click', handleEmailAuth);
-anonymousBtn.addEventListener('click', handleAnonymous);
-[emailInput, passInput].forEach(f => f.addEventListener('keypress', e => { if(e.key==='Enter') handleEmailAuth(); }));
 
-// After auth success
+// Auto-start login
+startAnonymousLogin();
+
+// Auth state listener
 onAuthStateChanged(auth, async (user) => {
-  if(!user) return;
+  if (!user) return;
   userId = user.uid;
-  await loadFromFirestore();
+  diag(`Authenticated as ${user.isAnonymous ? 'Anonymous' : user.email}`);
+  
+  // Load user data from Firestore
+  try {
+    const snap = await getDoc(doc(db, 'users', userId));
+    if (snap.exists()) {
+      const data = snap.data();
+      liked = data.liked || [];
+      history = data.history || [];
+      diag(`Loaded ${liked.length} liked, ${history.length} history items`);
+    } else {
+      diag("New user – no saved data yet");
+    }
+  } catch (err) {
+    diag(`Firestore read error: ${err.message}`, true);
+  }
+  
+  // Hide auth wall and show app
   wall.style.display = 'none';
-  const chip = document.getElementById('date-chip');
-  const displayName = user.isAnonymous ? 'Anonymous 👤' : user.email;
-  chip.innerHTML = `<span class="auth-email">${displayName}</span><button class="btn-signout" id="signout-btn">Sign out</button>`;
-  document.getElementById('signout-btn').onclick = async () => { await signOut(auth); location.reload(); };
+  
+  // Show user info in header
+  const userInfoDiv = document.getElementById('user-info');
+  userInfoDiv.innerHTML = `<span>👤 ${user.isAnonymous ? 'Guest' : user.email}</span>
+    <button class="btn-refresh" id="signout-btn" style="padding:2px 8px;font-size:10px">Sign out</button>`;
+  document.getElementById('signout-btn')?.addEventListener('click', async () => {
+    await signOut(auth);
+    location.reload();
+  });
+  
   bootApp();
 });
 
-// ---------- OPENALEX & APP ----------
-function invertedToText(inv) { if(!inv) return ''; return Object.entries(inv).sort((a,b)=>a[1][0]-b[1][0]).map(([w])=>w).join(' '); }
-async function fetchOpenAlex(url) { const r = await fetch(url); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
-function parseOpenAlexWork(work, cat) {
+// ========== SAVE TO FIRESTORE ==========
+async function saveToFirestore() {
+  if (!userId) return;
+  try {
+    await setDoc(doc(db, 'users', userId), { liked, history }, { merge: true });
+  } catch (err) { console.error("Save error", err); }
+}
+function saveLiked() { saveToFirestore(); renderLikedList(); }
+function saveHistory() { saveToFirestore(); }
+
+// ========== OPENALEX PAPER FETCHING ==========
+function invertedToText(inv) {
+  if (!inv) return '';
+  return Object.entries(inv).sort((a,b) => a[1][0]-b[1][0]).map(([w]) => w).join(' ');
+}
+async function fetchOpenAlex(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+function parseWork(work, catLabel) {
   const title = work.title || 'Untitled';
-  let abs = work.abstract_inverted_index ? invertedToText(work.abstract_inverted_index) : (work.abstract || '');
-  const authors = (work.authorships||[]).map(a=>a.author.display_name).join(', ');
-  const doi = work.doi ? work.doi.replace('https://doi.org/','') : null;
+  let abstract = '';
+  if (work.abstract_inverted_index) abstract = invertedToText(work.abstract_inverted_index);
+  else if (work.abstract) abstract = work.abstract;
+  const authors = (work.authorships || []).map(a => a.author.display_name).join(', ');
+  const doi = work.doi ? work.doi.replace('https://doi.org/', '') : null;
   const id = doi || work.id.split('/').pop();
   let url = '#';
-  const arxiv = (work.primary_location?.landing_page_url||'').match(/arxiv\.org\/abs\/([\d.]+)/)?.[1] || (work.id||'').match(/arxiv\.org\/abs\/([\d.]+)/)?.[1];
-  if(arxiv) url = `https://arxiv.org/abs/${arxiv}`;
-  else if(work.primary_location?.pdf_url) url = work.primary_location.pdf_url;
-  else if(work.doi) url = work.doi;
-  return { id, title, summary: abs.slice(0,800)+(abs.length>800?'…':''), authors, cat, pub: work.publication_date?.slice(0,10)||'', url };
+  const arxivMatch = (work.primary_location?.landing_page_url || '').match(/arxiv\.org\/abs\/([\d.]+)/);
+  if (arxivMatch) url = `https://arxiv.org/abs/${arxivMatch[1]}`;
+  else if (work.primary_location?.pdf_url) url = work.primary_location.pdf_url;
+  else if (work.doi) url = work.doi;
+  return { id, title, summary: abstract.slice(0,800), authors, cat: catLabel, pub: work.publication_date?.slice(0,10) || '', url };
 }
+
 const CATEGORIES = [
-  { id:'quantum', label:'Quantum', searchQuery:'quantum mechanics OR quantum computing', keywords:['quantum','qubit','entanglement'] },
-  { id:'hep-th', label:'HEP Theory', searchQuery:'string theory OR quantum field theory', keywords:['string theory','quantum field','conformal'] },
-  { id:'astro-ph', label:'Astrophysics', searchQuery:'astrophysics OR cosmology OR dark matter', keywords:['galaxy','cosmology','dark matter','black hole'] },
-  { id:'cond-mat', label:'Condensed Matter', searchQuery:'condensed matter OR superconductivity', keywords:['superconductivity','graphene','quantum hall'] },
-  { id:'gr-qc', label:'Gravity', searchQuery:'general relativity OR gravitational waves', keywords:['general relativity','black hole','gravitational wave'] },
-  { id:'hep-ph', label:'Particles', searchQuery:'particle physics OR collider OR neutrino', keywords:['collider','neutrino','higgs'] },
-  { id:'math-ph', label:'Math-Phys', searchQuery:'mathematical physics OR operator algebra', keywords:['mathematical physics','hilbert space','operator algebra'] },
-  { id:'nucl-th', label:'Nuclear', searchQuery:'nuclear physics OR nuclear structure', keywords:['nuclear physics','neutron','quark-gluon'] }
+  { id:'quantum', label:'Quantum', query:'quantum mechanics OR quantum computing', keywords:['quantum','qubit'] },
+  { id:'astro', label:'Astrophysics', query:'astrophysics OR cosmology', keywords:['galaxy','cosmos','dark matter'] },
+  { id:'gravity', label:'Gravity', query:'general relativity OR black hole', keywords:['general relativity','black hole'] },
+  { id:'particle', label:'Particle', query:'particle physics OR collider', keywords:['collider','neutrino','higgs'] },
+  { id:'condmat', label:'Condensed Matter', query:'superconductivity OR graphene', keywords:['superconduct','graphene'] }
 ];
-function matchesCategory(p, cat) { const t = p.title.toLowerCase(); return cat.keywords.some(kw => t.includes(kw.toLowerCase())); }
-async function fetchValidCategoryPaper(cat, attempt=0) {
-  const page = Math.floor(Math.random()*200)+1;
-  const url = `https://api.openalex.org/works?search=${encodeURIComponent(cat.searchQuery)}&filter=open_access.is_oa:true&sort=relevance_score:desc&page=${page}&per-page=25`;
+
+async function fetchPaperForCategory(cat, attempt=0) {
+  const page = Math.floor(Math.random() * 100) + 1;
+  const url = `https://api.openalex.org/works?search=${encodeURIComponent(cat.query)}&filter=open_access.is_oa:true&sort=relevance_score:desc&page=${page}&per-page=25`;
   const data = await fetchOpenAlex(url);
-  if(!data.results?.length) throw new Error('No papers');
-  let candidates = data.results.map(w=>parseOpenAlexWork(w, cat.label)).filter(p=>matchesCategory(p,cat));
-  if(candidates.length) return candidates[Math.floor(Math.random()*candidates.length)];
-  if(attempt<6) { await new Promise(r=>setTimeout(r,200)); return fetchValidCategoryPaper(cat, attempt+1); }
-  return parseOpenAlexWork(data.results[0], cat.label);
+  if (!data.results?.length) throw new Error('No papers');
+  const candidates = data.results.map(w => parseWork(w, cat.label)).filter(p => 
+    cat.keywords.some(kw => p.title.toLowerCase().includes(kw))
+  );
+  if (candidates.length) return candidates[Math.floor(Math.random() * candidates.length)];
+  if (attempt < 4) {
+    await new Promise(r => setTimeout(r, 300));
+    return fetchPaperForCategory(cat, attempt+1);
+  }
+  return parseWork(data.results[0], cat.label);
 }
-async function loadTodayPaper(randomMode=false, specificCat=null) {
-  const loading = document.getElementById('today-loading'), errDiv = document.getElementById('today-error'), paperDiv = document.getElementById('today-paper');
-  loading.style.display='flex'; errDiv.style.display='none'; paperDiv.style.display='none';
+
+async function loadTodayPaper(randomMode = false, specificCat = null) {
+  const container = document.getElementById('today-content');
+  container.innerHTML = '<div class="state-loading"><div class="spinner"></div>Loading paper...</div>';
   try {
     let catId = specificCat || activeCat;
-    if(!catId) { const idx = randomMode ? Math.floor(Math.random()*CATEGORIES.length) : (new Date().getDate() % CATEGORIES.length); catId = CATEGORIES[idx].id; }
-    const category = CATEGORIES.find(c=>c.id===catId);
-    const paper = await fetchValidCategoryPaper(category);
+    if (!catId) {
+      const idx = randomMode ? Math.floor(Math.random()*CATEGORIES.length) : (new Date().getDate() % CATEGORIES.length);
+      catId = CATEGORIES[idx].id;
+    }
+    const category = CATEGORIES.find(c => c.id === catId);
+    const paper = await fetchPaperForCategory(category);
     currentPaper = paper;
+    
+    // Add to history
     const today = new Date().toISOString().slice(0,10);
-    history = history.filter(h=>!(h.date===today && h.paper.id===paper.id));
-    history.unshift({ date:today, paper });
-    if(history.length>280) history=history.slice(0,280);
+    history = history.filter(h => !(h.date === today && h.paper.id === paper.id));
+    history.unshift({ date: today, paper });
+    if (history.length > 200) history = history.slice(0,200);
     saveHistory();
-    document.getElementById('t-badge').textContent = paper.cat;
-    document.getElementById('t-date').textContent = paper.pub ? `published ${paper.pub}` : '';
-    document.getElementById('t-title').textContent = paper.title;
-    document.getElementById('t-authors').textContent = paper.authors.slice(0,140);
-    document.getElementById('t-abstract').textContent = paper.summary;
-    document.getElementById('t-link').href = paper.url;
-    document.getElementById('t-id').textContent = paper.id;
-    const likeBtn = document.getElementById('t-like');
-    const likedState = isLiked(paper.id);
-    likeBtn.classList.toggle('liked', likedState);
-    likeBtn.textContent = likedState ? '❤️' : '♡';
-    loading.style.display='none'; paperDiv.style.display='block';
-  } catch(e) { loading.style.display='none'; errDiv.style.display='block'; errDiv.innerHTML = `⚠️ ${e.message}<br><button id="retry-btn">Retry</button>`; document.getElementById('retry-btn')?.addEventListener('click',()=>loadTodayPaper(randomMode,specificCat),{once:true}); }
+    
+    const likedState = liked.some(p => p.id === paper.id);
+    container.innerHTML = `
+      <div class="paper-card">
+        <div><span class="badge">${paper.cat}</span> <span style="font-size:10px;color:var(--muted)">${paper.pub || ''}</span></div>
+        <h2 class="paper-title">${paper.title}</h2>
+        <p class="paper-authors">${paper.authors.slice(0,120) || '—'}</p>
+        <div class="divider" style="height:1px;background:rgba(255,255,255,0.1);margin:16px 0"></div>
+        <p class="paper-abstract">${paper.summary || 'No abstract available.'}</p>
+        <div class="action-row">
+          <a class="btn-read" href="${paper.url}" target="_blank">📄 Read Full Paper</a>
+          <button class="btn-like ${likedState ? 'liked' : ''}" id="like-btn">${likedState ? '❤️' : '♡'}</button>
+        </div>
+        <div class="stats-row"><div class="stat-box"><div class="stat-label">ID</div><div class="stat-value">${paper.id.slice(0,30)}</div></div></div>
+      </div>
+      <div class="refresh-row"><button class="btn-refresh" id="refresh-btn">⟳ Another paper</button></div>
+    `;
+    document.getElementById('like-btn')?.addEventListener('click', () => toggleLikePaper(paper));
+    document.getElementById('refresh-btn')?.addEventListener('click', () => loadTodayPaper(true, activeCat));
+  } catch (err) {
+    container.innerHTML = `<div class="state-loading" style="color:#ff8888">⚠️ Error: ${err.message}<br><button class="btn-refresh" id="retry-btn">Retry</button></div>`;
+    document.getElementById('retry-btn')?.addEventListener('click', () => loadTodayPaper(randomMode, specificCat));
+  }
 }
+
+function toggleLikePaper(paper) {
+  const idx = liked.findIndex(p => p.id === paper.id);
+  if (idx === -1) {
+    liked.unshift(paper);
+    if (liked.length > 200) liked.pop();
+  } else {
+    liked.splice(idx, 1);
+  }
+  saveLiked();
+  const likeBtn = document.getElementById('like-btn');
+  if (likeBtn) {
+    const isNowLiked = liked.some(p => p.id === paper.id);
+    likeBtn.classList.toggle('liked', isNowLiked);
+    likeBtn.textContent = isNowLiked ? '❤️' : '♡';
+  }
+  renderLikedList();
+  renderHistoryList();
+}
+
 function renderLikedList() {
-  const c = document.getElementById('liked-list');
-  if(!liked.length) { c.innerHTML='<div class="empty-state">❤️ No liked papers.</div>'; return; }
-  c.innerHTML = liked.map(p=>`<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat}</div><div class="mini-title">${p.title.slice(0,85)}</div><div class="mini-authors">${p.authors.slice(0,65)}</div><div class="mini-row"><span style="font-size:10px;color:var(--muted)">${p.id.slice(0,20)}</span><button class="mini-like ${isLiked(p.id)?'liked':''}" data-id="${p.id}">${isLiked(p.id)?'❤️':'♡'}</button></div></button>`).join('');
-  attachMiniEvents(c, liked);
+  const container = document.getElementById('liked-list');
+  if (!liked.length) { container.innerHTML = '<div class="state-loading">❤️ No liked papers yet.</div>'; return; }
+  container.innerHTML = liked.map(p => `
+    <div class="mini-card" data-id="${p.id}">
+      <div class="mini-badge" style="font-family:mono;font-size:10px;color:var(--accent)">${p.cat}</div>
+      <div class="mini-title">${p.title.slice(0,80)}</div>
+      <div class="mini-authors" style="font-size:12px;color:var(--muted)">${p.authors.slice(0,60)}</div>
+      <div class="mini-row" style="display:flex;justify-content:space-between;margin-top:8px">
+        <span style="font-size:10px;color:var(--muted)">${p.id.slice(0,16)}</span>
+        <button class="mini-like" data-id="${p.id}" style="background:none;border:none;cursor:pointer">❤️</button>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.mini-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.classList.contains('mini-like')) return;
+      const paper = liked.find(p => p.id === card.dataset.id);
+      if (paper) window.open(paper.url, '_blank');
+    });
+  });
+  document.querySelectorAll('.mini-like').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const pid = btn.dataset.id;
+      const paper = liked.find(p => p.id === pid);
+      if (paper) toggleLikePaper(paper);
+    });
+  });
 }
+
 function renderHistoryList() {
-  const c = document.getElementById('history-list');
-  if(!history.length) { c.innerHTML='<div class="empty-state">📜 No history.</div>'; return; }
-  const groups = {};
-  history.forEach(h=>{ if(!groups[h.date]) groups[h.date]=[]; groups[h.date].push(h.paper); });
-  c.innerHTML = Object.entries(groups).map(([date,papers])=>`<div class="history-group"><div class="history-date-label">${date===new Date().toISOString().slice(0,10)?'Today':new Date(date).toLocaleDateString()}</div>${papers.map(p=>`<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat}</div><div class="mini-title">${p.title.slice(0,85)}</div><div class="mini-authors">${p.authors.slice(0,65)}</div><div class="mini-row"><span style="font-size:10px;color:var(--muted)">${p.id.slice(0,20)}</span><button class="mini-like ${isLiked(p.id)?'liked':''}" data-id="${p.id}">${isLiked(p.id)?'❤️':'♡'}</button></div></button>`).join('')}</div>`).join('');
-  attachMiniEvents(c, history.map(h=>h.paper));
-}
-function attachMiniEvents(container, papersArr) {
-  container.querySelectorAll('.mini-card').forEach(card => {
-    card.onclick = (e) => { if(e.target.classList.contains('mini-like')) return; const p = papersArr.find(p=>p.id===card.dataset.id); if(p) window.open(p.url,'_blank'); };
+  const container = document.getElementById('history-list');
+  if (!history.length) { container.innerHTML = '<div class="state-loading">📜 No history yet.</div>'; return; }
+  const grouped = {};
+  history.forEach(h => { if (!grouped[h.date]) grouped[h.date] = []; grouped[h.date].push(h.paper); });
+  container.innerHTML = Object.entries(grouped).map(([date, papers]) => `
+    <div style="margin-bottom:24px">
+      <div style="font-family:mono;font-size:11px;color:var(--muted);margin-bottom:8px">${date === new Date().toISOString().slice(0,10) ? 'Today' : date}</div>
+      ${papers.map(p => `
+        <div class="mini-card" data-id="${p.id}">
+          <div class="mini-badge" style="font-size:10px">${p.cat}</div>
+          <div class="mini-title">${p.title.slice(0,80)}</div>
+          <div class="mini-row" style="display:flex;justify-content:space-between;margin-top:6px">
+            <span style="font-size:10px;color:var(--muted)">${p.id.slice(0,16)}</span>
+            <button class="mini-like" data-id="${p.id}" style="background:none;border:none;cursor:pointer">${liked.some(l => l.id === p.id) ? '❤️' : '♡'}</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+  document.querySelectorAll('.mini-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.classList.contains('mini-like')) return;
+      const allPapers = history.flatMap(h => h.paper);
+      const paper = allPapers.find(p => p.id === card.dataset.id);
+      if (paper) window.open(paper.url, '_blank');
+    });
   });
-  container.querySelectorAll('.mini-like').forEach(btn => {
-    btn.onclick = (e) => { e.stopPropagation(); const pid = btn.dataset.id; const paper = papersArr.find(p=>p.id===pid); if(paper) { toggleLike(paper); renderLikedList(); renderHistoryList(); if(currentPaper?.id===paper.id) { const likeBtn = document.getElementById('t-like'); likeBtn.classList.toggle('liked', isLiked(paper.id)); likeBtn.textContent = isLiked(paper.id)?'❤️':'♡'; } } };
+  document.querySelectorAll('.mini-like').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const pid = btn.dataset.id;
+      const allPapers = history.flatMap(h => h.paper);
+      const paper = allPapers.find(p => p.id === pid);
+      if (paper) toggleLikePaper(paper);
+    });
   });
 }
-document.getElementById('liked-clear')?.addEventListener('click',()=>{ if(confirm('Remove all liked?')){ liked=[]; saveLiked(); renderLikedList(); if(currentPaper) document.getElementById('t-like').classList.remove('liked'); }});
+
 function bootApp() {
+  // Build category bar
   const strip = document.getElementById('cat-scroll');
-  CATEGORIES.forEach(cat => { const btn = document.createElement('button'); btn.className = 'cat-btn'; btn.textContent = cat.label; btn.onclick = () => { document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); activeCat = cat.id; loadTodayPaper(false, activeCat); }; strip.appendChild(btn); });
-  document.getElementById('refresh-btn').onclick = () => loadTodayPaper(true, activeCat);
-  document.getElementById('t-like').onclick = () => { if(currentPaper) { toggleLike(currentPaper); renderLikedList(); renderHistoryList(); document.getElementById('t-like').classList.toggle('liked', isLiked(currentPaper.id)); document.getElementById('t-like').textContent = isLiked(currentPaper.id)?'❤️':'♡'; } };
-  document.getElementById('rec-load-btn').onclick = () => { document.getElementById('rec-loading').style.display='flex'; setTimeout(()=>{ document.getElementById('rec-loading').style.display='none'; document.getElementById('rec-list').innerHTML='<div class="empty-state">✨ Like papers for personalized recommendations.</div>'; },800); };
-  updateBadge();
+  CATEGORIES.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn';
+    btn.textContent = cat.label;
+    btn.onclick = () => {
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeCat = cat.id;
+      loadTodayPaper(false, activeCat);
+    };
+    strip.appendChild(btn);
+  });
+  
+  // Navigation
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const page = btn.dataset.page;
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`page-${page}`).classList.add('active');
+      btn.classList.add('active');
+      if (page === 'liked') renderLikedList();
+      if (page === 'history') renderHistoryList();
+    });
+  });
+  
+  document.getElementById('clear-liked')?.addEventListener('click', () => {
+    if (confirm('Remove all liked papers?')) { liked = []; saveLiked(); renderLikedList(); if (currentPaper) loadTodayPaper(false, activeCat); }
+  });
+  
   loadTodayPaper(false, null);
-  renderLikedList(); renderHistoryList();
-  document.querySelectorAll('.nav-btn').forEach(btn => btn.onclick = () => { const name = btn.dataset.page; document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); document.getElementById(`page-${name}`).classList.add('active'); btn.classList.add('active'); if(name==='liked') renderLikedList(); if(name==='history') renderHistoryList(); });
+  renderLikedList();
+  renderHistoryList();
 }
 </script>
 </body>
