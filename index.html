@@ -3,32 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Daily Physics — Cross‑device sync</title>
+<title>Daily Physics — Full Sync + Recommendations</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1a1a24;--border:rgba(255,255,255,0.07);--text:#f0efe8;--muted:#6a6a7a;--accent:#c8b8f5;--like:#f5829a;--serif:'DM Serif Display',serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100dvh}
-#app{max-width:520px;margin:0 auto;padding:20px 20px 80px}
+#app{max-width:560px;margin:0 auto;padding:20px 20px 80px}
 .nav{position:fixed;bottom:0;left:0;right:0;background:#13131ad9;backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-around;padding:8px 0;z-index:100}
-.nav-btn{background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-family:var(--sans)}
+.nav-btn{background:none;border:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:12px}
 .nav-btn.active{color:var(--accent)}
 .page{display:none}
 .page.active{display:block}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:20px;margin-top:16px}
 .btn{background:var(--accent);border:none;border-radius:40px;padding:10px 20px;color:#0a0a0f;font-weight:600;cursor:pointer}
 .btn-outline{background:transparent;border:1px solid var(--accent);color:var(--accent)}
-input,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;color:white;width:100%;margin-bottom:12px;font-family:var(--sans)}
-.auth-box{background:var(--surface);border-radius:24px;padding:24px;max-width:360px;margin:40px auto}
-.error{background:#ff444410;border:1px solid #ff4444;border-radius:12px;padding:10px;color:#ff8888;margin-top:12px;display:none}
+.cat-scroll{display:flex;gap:8px;overflow-x:auto;margin:16px 0;padding-bottom:4px}
+.cat-btn{background:var(--surface2);border:1px solid var(--border);border-radius:40px;padding:6px 14px;font-size:13px;white-space:nowrap;cursor:pointer}
+.cat-btn.active{background:var(--accent);color:#0a0a0f;border-color:var(--accent)}
 .spinner{width:28px;height:28px;border:2px solid rgba(255,255,255,0.1);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:20px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
-.badge{background:var(--accent);color:#0a0a0f;padding:2px 8px;border-radius:40px;font-size:12px;font-weight:bold}
-.liked-btn{background:#1a1a24;border:1px solid #2a2a35;border-radius:40px;width:48px;cursor:pointer;font-size:20px}
-.liked-btn.liked{color:var(--like);border-color:rgba(245,130,154,0.4)}
+.like-btn{background:#1a1a24;border:1px solid #2a2a35;border-radius:40px;width:48px;cursor:pointer;font-size:20px}
+.like-btn.liked{color:var(--like);border-color:rgba(245,130,154,0.4)}
 .mini-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px;margin-bottom:10px;cursor:pointer}
 .mini-title{font-family:var(--serif);font-size:15px}
-hr{border-color:var(--border);margin:16px 0}
+.auth-wall{position:fixed;top:0;left:0;right:0;bottom:0;background:#0a0a0f;display:flex;align-items:center;justify-content:center;z-index:200}
+.auth-box{background:var(--surface);border-radius:24px;padding:28px;max-width:360px;width:90%}
+.auth-tabs{display:flex;gap:10px;margin:20px 0}
+.auth-tab{flex:1;background:var(--surface2);border:none;border-radius:12px;padding:10px;cursor:pointer}
+.auth-tab.active{background:var(--accent);color:#0a0a0f}
+input{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;color:white;width:100%;margin-bottom:12px}
+.error{background:#ff444410;border:1px solid #ff4444;border-radius:12px;padding:10px;color:#ff8888;margin-top:12px;display:none}
 </style>
 </head>
 <body>
@@ -38,30 +43,31 @@ hr{border-color:var(--border);margin:16px 0}
       <h1 style="font-family:var(--serif)">Daily Physics</h1>
       <div id="user-badge" style="font-size:12px;background:var(--surface2);padding:4px 12px;border-radius:40px"></div>
     </div>
-    <div id="cat-bar" style="display:flex;gap:8px;overflow-x:auto;margin:16px 0"></div>
+    <div class="cat-scroll" id="cat-bar"></div>
     <div id="today-content"></div>
   </div>
   <div class="page" id="page-liked"><h2>Liked papers</h2><div id="liked-list"></div></div>
-  <div class="page" id="page-history"><h2>History</h2><div id="history-list"></div></div>
+  <div class="page" id="page-history"><h2>Reading history</h2><div id="history-list"></div></div>
+  <div class="page" id="page-rec"><h2>For you</h2><div id="rec-content"></div></div>
   <div class="nav">
     <button class="nav-btn active" data-page="today">📄 Today</button>
     <button class="nav-btn" data-page="liked">❤️ Liked</button>
     <button class="nav-btn" data-page="history">📜 History</button>
+    <button class="nav-btn" data-page="rec">✨ For You</button>
   </div>
 </div>
 
-<!-- Auth wall -->
-<div id="auth-wall" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#0a0a0f;display:flex;align-items:center;justify-content:center;z-index:200">
+<div id="auth-wall" class="auth-wall">
   <div class="auth-box">
     <h2 style="text-align:center">Daily Physics</h2>
-    <div style="display:flex;gap:10px;margin:20px 0">
-      <button id="tab-login" style="flex:1;background:var(--accent);border:none;border-radius:12px;padding:8px">Log in</button>
-      <button id="tab-signup" style="flex:1;background:var(--surface2);border:none;border-radius:12px;padding:8px">Sign up</button>
+    <div class="auth-tabs">
+      <button id="tab-login" class="auth-tab active">Log in</button>
+      <button id="tab-signup" class="auth-tab">Sign up</button>
     </div>
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Password">
     <button id="submit-auth" class="btn" style="width:100%;margin-top:8px">Log in</button>
-    <button id="anonymous-auth" class="btn btn-outline" style="width:100%;margin-top:8px">🚀 Anonymous</button>
+    <button id="anonymous-auth" class="btn btn-outline" style="width:100%;margin-top:8px">🚀 Continue anonymously</button>
     <div id="auth-error" class="error"></div>
   </div>
 </div>
@@ -89,10 +95,21 @@ let currentPaper = null;
 let activeCat = null;
 let unsubFirestore = null;
 
+// Full category list
+const CATEGORIES = [
+  { id: 'quantum', label: 'Quantum', query: 'quantum mechanics OR quantum computing OR entanglement OR qubit', keywords: ['quantum','qubit','entanglement','superposition'] },
+  { id: 'hep-th', label: 'HEP Theory', query: 'string theory OR quantum field theory OR conformal field theory', keywords: ['string theory','quantum field','conformal','supersymmetry'] },
+  { id: 'astro-ph', label: 'Astrophysics', query: 'astrophysics OR cosmology OR dark matter OR black hole', keywords: ['galaxy','cosmology','dark matter','black hole','supernova'] },
+  { id: 'cond-mat', label: 'Condensed Matter', query: 'superconductivity OR topological insulator OR graphene', keywords: ['superconductivity','graphene','topological','quantum hall'] },
+  { id: 'gr-qc', label: 'Gravity', query: 'general relativity OR gravitational waves OR spacetime', keywords: ['general relativity','gravitational wave','spacetime','wormhole'] },
+  { id: 'hep-ph', label: 'Particles', query: 'particle physics OR collider OR neutrino OR higgs', keywords: ['collider','neutrino','higgs','quark','lepton'] },
+  { id: 'math-ph', label: 'Math-Phys', query: 'mathematical physics OR operator algebra OR hilbert space', keywords: ['mathematical physics','hilbert space','operator algebra','functional analysis'] },
+  { id: 'nucl-th', label: 'Nuclear', query: 'nuclear physics OR nuclear structure OR quark-gluon plasma', keywords: ['nuclear physics','neutron','proton','fusion','fission'] }
+];
+
 // ---------- Firestore sync ----------
 async function syncUserData(userId) {
   const userRef = doc(db, 'users', userId);
-  // Real-time listener
   if (unsubFirestore) unsubFirestore();
   unsubFirestore = onSnapshot(userRef, (snap) => {
     if (snap.exists()) {
@@ -103,11 +120,9 @@ async function syncUserData(userId) {
       liked = [];
       history = [];
     }
-    // Update UI after every sync
     renderLiked();
     renderHistory();
-    if (currentPaper) updateTodayLikeButton();
-    updateBadge();
+    if (currentPaper) updateLikeButton();
   }, (err) => console.warn("Firestore sync error:", err));
 }
 
@@ -135,10 +150,8 @@ function toggleLike(paper) {
   saveToFirestore();
 }
 
-// UI helpers
-function updateBadge() { /* optional */ }
-function updateTodayLikeButton() {
-  const btn = document.getElementById('like-today');
+function updateLikeButton() {
+  const btn = document.getElementById('like-btn');
   if (btn && currentPaper) {
     const isLiked = liked.some(p => p.id === currentPaper.id);
     btn.classList.toggle('liked', isLiked);
@@ -146,7 +159,161 @@ function updateTodayLikeButton() {
   }
 }
 
-// ---------- Auth UI ----------
+// ---------- OpenAlex ----------
+async function fetchOpenAlex(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+function parseWork(work, catLabel) {
+  const title = work.title || 'Untitled';
+  let abstract = '';
+  if (work.abstract_inverted_index) {
+    const words = Object.entries(work.abstract_inverted_index).sort((a,b)=>a[1][0]-b[1][0]);
+    abstract = words.map(([w]) => w).join(' ').slice(0,600);
+  } else if (work.abstract) abstract = work.abstract.slice(0,600);
+  const authors = (work.authorships || []).map(a => a.author.display_name).join(', ');
+  const id = work.doi ? work.doi.replace('https://doi.org/','') : work.id.split('/').pop();
+  let url = work.doi || work.id;
+  const arxiv = work.primary_location?.landing_page_url?.match(/arxiv\.org\/abs\/([\d.]+)/)?.[1];
+  if (arxiv) url = `https://arxiv.org/abs/${arxiv}`;
+  return { id, title, summary: abstract, authors, cat: catLabel, pub: work.publication_date?.slice(0,10) || '', url };
+}
+
+async function fetchPaperForCategory(category, attempt=0) {
+  const page = Math.floor(Math.random() * 100) + 1;
+  const url = `https://api.openalex.org/works?search=${encodeURIComponent(category.query)}&filter=open_access.is_oa:true&sort=relevance_score:desc&page=${page}&per-page=25`;
+  const data = await fetchOpenAlex(url);
+  if (!data.results?.length) throw new Error('No papers');
+  const candidates = data.results.map(w => parseWork(w, category.label)).filter(p => 
+    category.keywords.some(kw => p.title.toLowerCase().includes(kw))
+  );
+  if (candidates.length) return candidates[Math.floor(Math.random() * candidates.length)];
+  if (attempt < 4) {
+    await new Promise(r => setTimeout(r, 200));
+    return fetchPaperForCategory(category, attempt+1);
+  }
+  return parseWork(data.results[0], category.label);
+}
+
+async function loadToday() {
+  const container = document.getElementById('today-content');
+  container.innerHTML = '<div class="spinner"></div><div style="text-align:center">Searching OpenAlex...</div>';
+  try {
+    const cat = activeCat || CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)].id;
+    const category = CATEGORIES.find(c => c.id === cat);
+    const paper = await fetchPaperForCategory(category);
+    currentPaper = paper;
+    addToHistory(paper);
+    const isLiked = liked.some(p => p.id === paper.id);
+    container.innerHTML = `
+      <div class="card">
+        <div><span class="cat-btn" style="background:var(--accent);color:#0a0a0f;padding:4px 12px">${paper.cat}</span> <span style="font-size:12px;color:var(--muted)">${paper.pub}</span></div>
+        <h2 style="margin:12px 0 8px;font-family:var(--serif)">${paper.title}</h2>
+        <p style="color:var(--muted)">${paper.authors.slice(0,120)}</p>
+        <hr style="margin:16px 0;border-color:var(--border)">
+        <p>${paper.summary || 'No abstract available.'}</p>
+        <div style="display:flex;gap:12px;margin-top:20px">
+          <a href="${paper.url}" target="_blank" class="btn" style="flex:1;text-align:center;text-decoration:none">📄 Read full paper</a>
+          <button id="like-btn" class="like-btn ${isLiked ? 'liked' : ''}">${isLiked ? '❤️' : '♡'}</button>
+        </div>
+      </div>
+      <button id="refresh-today" class="btn btn-outline" style="margin-top:16px;width:100%">⟳ Random paper</button>
+    `;
+    document.getElementById('like-btn').onclick = () => { toggleLike(currentPaper); updateLikeButton(); renderLiked(); renderHistory(); };
+    document.getElementById('refresh-today').onclick = () => loadToday();
+  } catch(e) {
+    container.innerHTML = `<div class="card">Error: ${e.message}<br><button onclick="location.reload()" class="btn" style="margin-top:12px">Retry</button></div>`;
+  }
+}
+
+// ---------- Recommendations based on liked papers ----------
+async function generateRecommendations() {
+  const recDiv = document.getElementById('rec-content');
+  recDiv.innerHTML = '<div class="spinner"></div><div style="text-align:center">Finding recommendations...</div>';
+  const seedPapers = [];
+  if (currentPaper) seedPapers.push(currentPaper);
+  seedPapers.push(...liked.slice(0,5));
+  if (seedPapers.length === 0) {
+    recDiv.innerHTML = '<div class="card">❤️ Like a few papers first to get personalized recommendations.</div>';
+    return;
+  }
+  // Extract keywords from titles
+  const allText = seedPapers.map(p => p.title + ' ' + (p.summary || '')).join(' ').toLowerCase();
+  const words = allText.match(/\b[a-z]{4,}\b/g) || [];
+  const freq = {};
+  const stopwords = new Set(['the','and','for','with','from','this','that','these','those','have','are','was','were','not','but','they','their','from','about','into','through','during','before','after','above','below','between','using','based','model','study','paper','work','result','show','also','can','will','may']);
+  words.forEach(w => { if (!stopwords.has(w)) freq[w] = (freq[w] || 0) + 1; });
+  const keywords = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,4).map(e=>e[0]);
+  if (keywords.length === 0) keywords.push('physics');
+  const searchQuery = keywords.join(' ');
+  const url = `https://api.openalex.org/works?search=${encodeURIComponent(searchQuery)}&filter=open_access.is_oa:true&sort=relevance_score:desc&per-page=20`;
+  try {
+    const data = await fetchOpenAlex(url);
+    if (!data.results?.length) throw new Error('No recommendations');
+    const seenIds = new Set([...(currentPaper?[currentPaper.id]:[]), ...liked.map(p=>p.id)]);
+    let recs = data.results.map(w => parseWork(w, 'Recommendation')).filter(p => !seenIds.has(p.id)).slice(0,12);
+    if (recs.length === 0) throw new Error('All recommended papers already liked or current');
+    recDiv.innerHTML = recs.map(p => `
+      <div class="mini-card" data-id="${p.id}">
+        <div class="mini-title">${p.title.slice(0,80)}</div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px">
+          <span style="font-size:11px">${p.cat}</span>
+          <button class="rec-like-btn" data-id="${p.id}" style="background:none;border:none;color:var(--like);cursor:pointer">♡</button>
+        </div>
+      </div>
+    `).join('');
+    // Attach open link and like
+    document.querySelectorAll('#rec-content .mini-card').forEach(card => {
+      card.onclick = (e) => { if(!e.target.classList.contains('rec-like-btn')) { const paper = recs.find(p=>p.id===card.dataset.id); if(paper) window.open(paper.url, '_blank'); } };
+    });
+    document.querySelectorAll('#rec-content .rec-like-btn').forEach(btn => {
+      btn.onclick = (e) => { e.stopPropagation(); const paper = recs.find(p=>p.id===btn.dataset.id); if(paper) { toggleLike(paper); renderLiked(); renderHistory(); updateLikeButton(); btn.textContent = liked.some(p=>p.id===paper.id) ? '❤️' : '♡'; } };
+    });
+  } catch(e) {
+    recDiv.innerHTML = `<div class="card">Error: ${e.message}</div>`;
+  }
+}
+
+function renderLiked() {
+  const div = document.getElementById('liked-list');
+  if (!liked.length) { div.innerHTML = '<div class="card">No liked papers yet.<br>Tap ♡ on any paper.</div>'; return; }
+  div.innerHTML = liked.map(p => `
+    <div class="mini-card" data-id="${p.id}">
+      <div class="mini-title">${p.title.slice(0,70)}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px">
+        <span style="font-size:10px">${p.id.slice(0,16)}</span>
+        <button class="unlike-btn" data-id="${p.id}" style="background:none;border:none;color:var(--like);cursor:pointer">Remove</button>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('#liked-list .mini-card').forEach(card => card.onclick = (e) => { if(!e.target.classList.contains('unlike-btn')) window.open(liked.find(p=>p.id===card.dataset.id)?.url, '_blank'); });
+  document.querySelectorAll('#liked-list .unlike-btn').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); const paper = liked.find(p=>p.id===btn.dataset.id); if(paper) toggleLike(paper); });
+}
+
+function renderHistory() {
+  const div = document.getElementById('history-list');
+  if (!history.length) { div.innerHTML = '<div class="card">No reading history yet.</div>'; return; }
+  div.innerHTML = history.slice(0,30).map(h => `
+    <div class="mini-card" data-id="${h.paper.id}">
+      <div class="mini-title">${h.paper.title.slice(0,70)}</div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <span style="font-size:10px">${h.date}</span>
+        <span>${liked.some(p=>p.id===h.paper.id) ? '❤️' : ''}</span>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('#history-list .mini-card').forEach(card => card.onclick = () => { const paper = history.find(h=>h.paper.id===card.dataset.id)?.paper; if(paper) window.open(paper.url, '_blank'); });
+}
+
+function setupRecPage() {
+  const recDiv = document.getElementById('rec-content');
+  recDiv.innerHTML = `<button id="generate-rec" class="btn" style="width:100%">✨ Generate recommendations</button><div id="rec-list"></div>`;
+  document.getElementById('generate-rec').onclick = generateRecommendations;
+}
+
+// ---------- Auth ----------
 const wall = document.getElementById('auth-wall');
 const emailInp = document.getElementById('email');
 const passInp = document.getElementById('password');
@@ -157,8 +324,8 @@ const tabLogin = document.getElementById('tab-login');
 const tabSignup = document.getElementById('tab-signup');
 let authMode = 'login';
 
-tabLogin.onclick = () => { authMode = 'login'; tabLogin.style.background = 'var(--accent)'; tabSignup.style.background = 'var(--surface2)'; submitBtn.textContent = 'Log in'; errorDiv.style.display = 'none'; };
-tabSignup.onclick = () => { authMode = 'signup'; tabSignup.style.background = 'var(--accent)'; tabLogin.style.background = 'var(--surface2)'; submitBtn.textContent = 'Sign up'; errorDiv.style.display = 'none'; };
+tabLogin.onclick = () => { authMode = 'login'; tabLogin.classList.add('active'); tabSignup.classList.remove('active'); submitBtn.textContent = 'Log in'; errorDiv.style.display = 'none'; };
+tabSignup.onclick = () => { authMode = 'signup'; tabSignup.classList.add('active'); tabLogin.classList.remove('active'); submitBtn.textContent = 'Sign up'; errorDiv.style.display = 'none'; };
 
 async function handleAuth() {
   const email = emailInp.value.trim();
@@ -172,7 +339,7 @@ async function handleAuth() {
 }
 async function handleAnonymous() {
   anonBtn.disabled = true; anonBtn.textContent = '...';
-  try { await signInAnonymously(auth); } catch (err) { showError(friendlyError(err.code)); anonBtn.disabled = false; anonBtn.textContent = '🚀 Anonymous'; }
+  try { await signInAnonymously(auth); } catch (err) { showError(friendlyError(err.code)); anonBtn.disabled = false; anonBtn.textContent = '🚀 Continue anonymously'; }
 }
 function showError(msg) { errorDiv.textContent = msg; errorDiv.style.display = 'block'; }
 function friendlyError(code) {
@@ -198,116 +365,15 @@ onAuthStateChanged(auth, async user => {
   bootApp();
 });
 
-// ---------- OpenAlex ----------
-async function fetchOpenAlex(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-function parseWork(work, catLabel) {
-  const title = work.title || 'Untitled';
-  let abstract = '';
-  if (work.abstract_inverted_index) {
-    const words = Object.entries(work.abstract_inverted_index).sort((a,b)=>a[1][0]-b[1][0]);
-    abstract = words.map(([w]) => w).join(' ').slice(0,600);
-  }
-  const authors = (work.authorships || []).map(a => a.author.display_name).join(', ');
-  const id = work.doi ? work.doi.replace('https://doi.org/','') : work.id.split('/').pop();
-  let url = work.doi || work.id;
-  const arxiv = work.primary_location?.landing_page_url?.match(/arxiv\.org\/abs\/([\d.]+)/)?.[1];
-  if (arxiv) url = `https://arxiv.org/abs/${arxiv}`;
-  return { id, title, summary: abstract, authors, cat: catLabel, pub: work.publication_date?.slice(0,10) || '', url };
-}
-const CATEGORIES = [
-  { id:'quantum', label:'Quantum', query:'quantum mechanics OR quantum computing', keywords:['quantum','qubit'] },
-  { id:'astro', label:'Astro', query:'astrophysics OR cosmology', keywords:['galaxy','cosmos'] },
-  { id:'gravity', label:'Gravity', query:'general relativity OR black hole', keywords:['general relativity','black hole'] },
-  { id:'condmat', label:'CondMat', query:'superconductivity OR graphene', keywords:['superconduct','graphene'] },
-  { id:'hep', label:'Particle', query:'particle physics OR collider', keywords:['collider','neutrino','higgs'] }
-];
-async function fetchPaper(category, attempt=0) {
-  const page = Math.floor(Math.random()*80)+1;
-  const url = `https://api.openalex.org/works?search=${encodeURIComponent(category.query)}&filter=open_access.is_oa:true&sort=relevance_score:desc&page=${page}&per-page=20`;
-  const data = await fetchOpenAlex(url);
-  if (!data.results?.length) throw new Error('No papers');
-  const candidates = data.results.map(w => parseWork(w, category.label)).filter(p => category.keywords.some(k => p.title.toLowerCase().includes(k)));
-  if (candidates.length) return candidates[Math.floor(Math.random()*candidates.length)];
-  if (attempt<3) return fetchPaper(category, attempt+1);
-  return parseWork(data.results[0], category.label);
-}
-async function loadToday() {
-  const container = document.getElementById('today-content');
-  container.innerHTML = '<div class="spinner"></div><div style="text-align:center">Loading paper...</div>';
-  try {
-    const cat = activeCat || CATEGORIES[Math.floor(Math.random()*CATEGORIES.length)].id;
-    const category = CATEGORIES.find(c => c.id === cat);
-    const paper = await fetchPaper(category);
-    currentPaper = paper;
-    addToHistory(paper);
-    const isLiked = liked.some(p => p.id === paper.id);
-    container.innerHTML = `
-      <div class="card">
-        <div><span class="badge">${paper.cat}</span> <span style="color:var(--muted);font-size:12px">${paper.pub}</span></div>
-        <h2 style="margin:12px 0 8px">${paper.title}</h2>
-        <p style="color:var(--muted2)">${paper.authors.slice(0,120)}</p>
-        <hr>
-        <p>${paper.summary || 'No abstract available.'}</p>
-        <div style="display:flex;gap:12px;margin-top:20px">
-          <a href="${paper.url}" target="_blank" class="btn" style="flex:1;text-align:center;text-decoration:none">📄 Read</a>
-          <button id="like-today" class="liked-btn ${isLiked ? 'liked' : ''}">${isLiked ? '❤️' : '♡'}</button>
-        </div>
-      </div>
-      <button id="refresh-today" class="btn btn-outline" style="margin-top:16px;width:100%">⟳ Another paper</button>
-    `;
-    document.getElementById('like-today').onclick = () => { toggleLike(currentPaper); updateTodayLikeButton(); renderLiked(); renderHistory(); };
-    document.getElementById('refresh-today').onclick = () => loadToday();
-  } catch(e) {
-    container.innerHTML = `<div class="card">Error: ${e.message}<br><button onclick="location.reload()" class="btn" style="margin-top:12px">Retry</button></div>`;
-  }
-}
-
-function renderLiked() {
-  const div = document.getElementById('liked-list');
-  if (!liked.length) { div.innerHTML = '<div class="card">No liked papers yet.<br>Tap ♡ on any paper.</div>'; return; }
-  div.innerHTML = liked.map(p => `
-    <div class="mini-card" data-id="${p.id}">
-      <div class="mini-title">${p.title.slice(0,70)}</div>
-      <div style="display:flex;justify-content:space-between;margin-top:8px">
-        <span style="font-size:10px">${p.id.slice(0,16)}</span>
-        <button class="unlike-btn" data-id="${p.id}" style="background:none;border:none;color:var(--like);cursor:pointer">Remove</button>
-      </div>
-    </div>
-  `).join('');
-  document.querySelectorAll('.mini-card').forEach(card => card.onclick = (e) => { if(!e.target.classList.contains('unlike-btn')) window.open(liked.find(p=>p.id===card.dataset.id)?.url, '_blank'); });
-  document.querySelectorAll('.unlike-btn').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); const paper = liked.find(p=>p.id===btn.dataset.id); if(paper) toggleLike(paper); });
-}
-function renderHistory() {
-  const div = document.getElementById('history-list');
-  if (!history.length) { div.innerHTML = '<div class="card">No reading history yet.</div>'; return; }
-  div.innerHTML = history.slice(0,30).map(h => `
-    <div class="mini-card" data-id="${h.paper.id}">
-      <div class="mini-title">${h.paper.title.slice(0,70)}</div>
-      <div style="display:flex;justify-content:space-between;margin-top:6px">
-        <span style="font-size:10px">${h.date}</span>
-        <span>${liked.some(p=>p.id===h.paper.id) ? '❤️' : ''}</span>
-      </div>
-    </div>
-  `).join('');
-  document.querySelectorAll('#history-list .mini-card').forEach(card => card.onclick = () => { const paper = history.find(h=>h.paper.id===card.dataset.id)?.paper; if(paper) window.open(paper.url, '_blank'); });
-}
-
 function bootApp() {
   const catBar = document.getElementById('cat-bar');
   CATEGORIES.forEach(c => {
     const btn = document.createElement('button');
     btn.textContent = c.label;
-    btn.className = 'btn-outline';
-    btn.style.padding = '6px 14px';
-    btn.style.borderRadius = '40px';
-    btn.style.marginRight = '8px';
+    btn.className = 'cat-btn';
     btn.onclick = () => {
-      document.querySelectorAll('#cat-bar button').forEach(b => b.classList.remove('btn'));
-      btn.classList.add('btn');
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
       activeCat = c.id;
       loadToday();
     };
@@ -316,15 +382,18 @@ function bootApp() {
   loadToday();
   renderLiked();
   renderHistory();
+  setupRecPage();
   // navigation
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.onclick = () => {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(`page-${btn.dataset.page}`).classList.add('active');
+      const pageId = btn.dataset.page;
+      document.getElementById(`page-${pageId}`).classList.add('active');
       btn.classList.add('active');
-      if (btn.dataset.page === 'liked') renderLiked();
-      if (btn.dataset.page === 'history') renderHistory();
+      if (pageId === 'liked') renderLiked();
+      if (pageId === 'history') renderHistory();
+      if (pageId === 'rec') setupRecPage();
     };
   });
 }
