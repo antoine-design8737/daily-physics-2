@@ -99,12 +99,62 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
   <button class="nav-btn" data-page="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg><span>History</span></button>
   <button class="nav-btn" data-page="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>For You</span></button>
 </nav>
+<style>
+#auth-wall{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:24px}
+.auth-box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border2);border-radius:24px;padding:32px 28px}
+.auth-logo{font-family:var(--serif);font-size:22px;text-align:center;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:8px}
+.auth-sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:28px}
+.auth-tabs{display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:24px;gap:3px}
+.auth-tab{flex:1;padding:8px;font-size:13px;font-weight:500;border:none;background:none;border-radius:9px;cursor:pointer;color:var(--muted);transition:.2s;font-family:var(--sans)}
+.auth-tab.active{background:var(--surface);color:var(--text)}
+.auth-field{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--text);font-family:var(--sans);margin-bottom:12px;outline:none;transition:border-color .2s}
+.auth-field:focus{border-color:var(--accent)}
+.auth-btn{width:100%;padding:13px;background:var(--accent-dim);border:1px solid rgba(200,184,245,0.3);border-radius:12px;font-size:14px;font-weight:600;color:var(--accent);cursor:pointer;font-family:var(--sans);transition:.2s;margin-top:4px}
+.auth-btn:hover{background:rgba(200,184,245,0.2)}
+.auth-err{font-size:12px;color:#f0a0a0;background:rgba(220,60,60,0.08);border:1px solid rgba(220,60,60,0.2);border-radius:10px;padding:10px 12px;margin-top:12px;display:none;line-height:1.5}
+.auth-user-bar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.auth-email{font-family:var(--mono);font-size:11px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
+.btn-signout{background:none;border:1px solid var(--border);border-radius:40px;padding:4px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:var(--sans)}
+</style>
+
+<!-- Auth wall (shown until signed in) -->
+<div id="auth-wall">
+  <div class="auth-box">
+    <div class="auth-logo"><span class="logo-dot"></span>Daily Physics</div>
+    <p class="auth-sub">Sign in to sync your liked papers across devices</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Log in</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Sign up</button>
+    </div>
+    <input class="auth-field" id="auth-email" type="email" placeholder="Email" autocomplete="email">
+    <input class="auth-field" id="auth-password" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="auth-btn" id="auth-submit">Log in</button>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
+
+<script>
+window.switchTab = function switchTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('tab-signup').classList.toggle('active', tab==='signup');
+  document.getElementById('auth-submit').textContent = tab==='login' ? 'Log in' : 'Create account';
+  document.getElementById('auth-submit').dataset.mode = tab;
+  document.getElementById('auth-err').style.display = 'none';
+}
+switchTab('login');
+</script>
+
 <script type="module">
 // ========== FIREBASE SETUP ==========
-// 🔧 REPLACE THESE VALUES with your own Firebase project config:
-//    Go to https://console.firebase.google.com → your project → Project Settings → Your apps → SDK setup
+// 🔧 REPLACE these with your Firebase project config:
+//    console.firebase.google.com → Project Settings → Your apps → SDK setup
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getAuth, onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -117,24 +167,54 @@ const firebaseConfig = {
   appId: "1:476007239352:web:fa971840c944ca87e8ee4d"
 };
 
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
+const fbApp = initializeApp(firebaseConfig);
+const auth  = getAuth(fbApp);
+const db    = getFirestore(fbApp);
 
-let userId = null;  // set once auth resolves
+let userId = null;
 
-// Sign in anonymously so every browser gets a stable user ID automatically.
-// (Users can optionally link to Google/email later without losing data.)
-async function initAuth() {
-  return new Promise(resolve => {
-    onAuthStateChanged(auth, async user => {
-      if (!user) user = (await signInAnonymously(auth)).user;
-      userId = user.uid;
-      resolve();
-    });
-  });
+// ── Auth UI wiring ──────────────────────────────────────────────
+const submitBtn = document.getElementById('auth-submit');
+const errDiv    = document.getElementById('auth-err');
+
+submitBtn.dataset.mode = 'login';
+submitBtn.onclick = async () => {
+  const email    = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const mode     = submitBtn.dataset.mode;
+  errDiv.style.display = 'none';
+  submitBtn.disabled = true;
+  submitBtn.textContent = '…';
+  try {
+    if (mode === 'signup') {
+      await createUserWithEmailAndPassword(auth, email, password);
+    } else {
+      await signInWithEmailAndPassword(auth, email, password);
+    }
+    // onAuthStateChanged below will hide the auth wall and boot the app
+  } catch(e) {
+    errDiv.textContent = friendlyError(e.code);
+    errDiv.style.display = 'block';
+    submitBtn.disabled = false;
+    submitBtn.textContent = mode === 'signup' ? 'Create account' : 'Log in';
+  }
+};
+
+function friendlyError(code) {
+  const map = {
+    'auth/email-already-in-use':    'That email already has an account. Try logging in.',
+    'auth/invalid-email':           'Please enter a valid email address.',
+    'auth/weak-password':           'Password must be at least 6 characters.',
+    'auth/user-not-found':          'No account found with that email.',
+    'auth/wrong-password':          'Incorrect password.',
+    'auth/invalid-credential':      'Incorrect email or password.',
+    'auth/too-many-requests':       'Too many attempts. Try again later.',
+    'auth/network-request-failed':  'Network error. Check your connection.',
+  };
+  return map[code] || `Error: ${code}`;
 }
 
+// ── Firestore helpers ────────────────────────────────────────────
 async function loadFromFirestore() {
   const snap = await getDoc(doc(db, 'users', userId));
   if (snap.exists()) {
@@ -143,10 +223,29 @@ async function loadFromFirestore() {
     history = data.history || [];
   }
 }
-
 async function saveToFirestore() {
   await setDoc(doc(db, 'users', userId), { liked, history }, { merge: true });
 }
+
+// ── Wait for auth state, then boot app ──────────────────────────
+onAuthStateChanged(auth, async user => {
+  if (!user) return; // still on auth wall
+  userId = user.uid;
+  await loadFromFirestore();
+  document.getElementById('auth-wall').style.display = 'none';
+
+  // Show signed-in user in header
+  const chip = document.getElementById('date-chip');
+  chip.innerHTML = `<span class="auth-email" title="${user.email}">${user.email}</span>
+    <button class="btn-signout" id="signout-btn">Sign out</button>`;
+  document.getElementById('signout-btn').onclick = async () => {
+    liked = []; history = [];
+    await signOut(auth);
+    location.reload();
+  };
+
+  bootApp();
+});
 
 // ========== STORAGE ==========
 let liked   = [];
@@ -154,9 +253,11 @@ let history = [];
 let currentPaper = null;
 let activeCat    = null;
 
-// Wait for Firebase auth + data before booting the app
-await initAuth();
-await loadFromFirestore();
+function saveLiked()   { updateBadge(); saveToFirestore(); }
+function saveHistory() { saveToFirestore(); }
+
+// ── All app code runs inside bootApp() so it waits for auth ─────
+function bootApp() {
 
 // ========== CATEGORIES with high-precision keyword searches ==========
 // Each category has a search query (sent to OpenAlex) and a list of strong keywords 
@@ -508,6 +609,7 @@ renderHistoryList();
 
 // Expose showPage to nav buttons (they use onclick attributes compiled before module loaded)
 window.showPage = showPage;
+} // end bootApp()
 </script>
 </body>
 </html>
