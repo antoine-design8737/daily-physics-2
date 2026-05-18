@@ -86,6 +86,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Enable offline persistence (helps with sync)
 enableIndexedDbPersistence(db).catch(e => console.warn("Offline persistence:", e));
 
 let currentUser = null;
@@ -107,29 +109,61 @@ const CATEGORIES = [
   { id: 'nucl-th', label: 'Nuclear', query: 'nuclear physics OR nuclear structure OR quark-gluon plasma', keywords: ['nuclear physics','neutron','proton','fusion','fission'] }
 ];
 
-// ---------- Firestore sync ----------
+// ---------- Firestore sync with real‑time listener ----------
 async function syncUserData(userId) {
-  const userRef = doc(db, 'users', userId);
   if (unsubFirestore) unsubFirestore();
-  unsubFirestore = onSnapshot(userRef, (snap) => {
-    if (snap.exists()) {
-      const data = snap.data();
-      liked = data.liked || [];
-      history = data.history || [];
-    } else {
-      liked = [];
-      history = [];
+  const userRef = doc(db, 'users', userId);
+  
+  // First, try to get existing data to initialize
+  const snap = await getDoc(userRef);
+  if (snap.exists()) {
+    const data = snap.data();
+    liked = data.liked || [];
+    history = data.history || [];
+    console.log("Initial data loaded from Firestore:", { likedCount: liked.length, historyCount: history.length });
+  } else {
+    // Create empty document so onSnapshot triggers correctly
+    await setDoc(userRef, { liked: [], history: [] }, { merge: true });
+    liked = [];
+    history = [];
+  }
+  
+  // Real‑time listener for updates from other devices
+  unsubFirestore = onSnapshot(userRef, (docSnap) => {
+    if (docSnap.exists()) {
+      const newData = docSnap.data();
+      const newLiked = newData.liked || [];
+      const newHistory = newData.history || [];
+      
+      // Check if data actually changed to avoid unnecessary re-renders
+      const likedChanged = JSON.stringify(liked) !== JSON.stringify(newLiked);
+      const historyChanged = JSON.stringify(history) !== JSON.stringify(newHistory);
+      
+      if (likedChanged || historyChanged) {
+        console.log("Firestore update received – syncing data");
+        liked = newLiked;
+        history = newHistory;
+        renderLiked();
+        renderHistory();
+        if (currentPaper) updateLikeButton();
+      }
     }
-    renderLiked();
-    renderHistory();
-    if (currentPaper) updateLikeButton();
-  }, (err) => console.warn("Firestore sync error:", err));
+  }, (err) => {
+    console.error("Firestore listener error:", err);
+  });
 }
 
 async function saveToFirestore() {
   if (!currentUser) return;
-  const userRef = doc(db, 'users', currentUser.uid);
-  await setDoc(userRef, { liked, history }, { merge: true });
+  try {
+    const userRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userRef, { liked, history }, { merge: true });
+    console.log("Saved to Firestore");
+  } catch (err) {
+    console.error("Firestore save error:", err);
+    // Fallback to localStorage if needed
+    localStorage.setItem(`fallback_${currentUser.uid}`, JSON.stringify({ liked, history }));
+  }
 }
 
 function addToHistory(paper) {
@@ -148,6 +182,9 @@ function toggleLike(paper) {
     if (liked.length > 200) liked = liked.slice(0,200);
   }
   saveToFirestore();
+  renderLiked();
+  renderHistory();
+  if (currentPaper && currentPaper.id === paper.id) updateLikeButton();
 }
 
 function updateLikeButton() {
@@ -159,7 +196,7 @@ function updateLikeButton() {
   }
 }
 
-// ---------- OpenAlex ----------
+// ---------- OpenAlex paper fetching ----------
 async function fetchOpenAlex(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -221,7 +258,7 @@ async function loadToday() {
       </div>
       <button id="refresh-today" class="btn btn-outline" style="margin-top:16px;width:100%">⟳ Random paper</button>
     `;
-    document.getElementById('like-btn').onclick = () => { toggleLike(currentPaper); updateLikeButton(); renderLiked(); renderHistory(); };
+    document.getElementById('like-btn').onclick = () => { toggleLike(currentPaper); };
     document.getElementById('refresh-today').onclick = () => loadToday();
   } catch(e) {
     container.innerHTML = `<div class="card">Error: ${e.message}<br><button onclick="location.reload()" class="btn" style="margin-top:12px">Retry</button></div>`;
