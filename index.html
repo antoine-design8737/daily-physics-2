@@ -126,9 +126,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
       <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Log in</button>
       <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Sign up</button>
     </div>
-    <input class="auth-field" id="auth-email" type="email" placeholder="Email" autocomplete="email">
-    <input class="auth-field" id="auth-password" type="password" placeholder="Password" autocomplete="current-password">
-    <button class="auth-btn" id="auth-submit">Log in</button>
+    <input class="auth-field" id="auth-email" type="email" placeholder="Email" autocomplete="email" onkeydown="if(event.key==='Enter')window.__authSubmit()">
+    <input class="auth-field" id="auth-password" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')window.__authSubmit()">
+    <button class="auth-btn" id="auth-submit" onclick="window.__authSubmit()">Log in</button>
     <div class="auth-err" id="auth-err"></div>
   </div>
 </div>
@@ -158,10 +158,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+
 const firebaseConfig = {
   apiKey: "AIzaSyBhSfk39qU3YlBA4etrNC_AvxUNxR15sDA",
   authDomain: "physics-daily-89dd6.firebaseapp.com",
-  databaseURL: "https://physics-daily-89dd6-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "physics-daily-89dd6",
   storageBucket: "physics-daily-89dd6.firebasestorage.app",
   messagingSenderId: "476007239352",
@@ -175,14 +175,21 @@ const db    = getFirestore(fbApp);
 let userId = null;
 
 // ── Auth UI wiring ──────────────────────────────────────────────
-const submitBtn = document.getElementById('auth-submit');
-const errDiv    = document.getElementById('auth-err');
-
-submitBtn.dataset.mode = 'login';
-submitBtn.onclick = async () => {
+// Exposed as a global so the button's inline onclick always finds it,
+// even if the rest of the module had an error.
+window.__authSubmit = async () => {
+  const submitBtn = document.getElementById('auth-submit');
+  const errDiv    = document.getElementById('auth-err');
   const email    = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
-  const mode     = window.__authMode || 'login';   // ← read shared global, not dataset
+  const mode     = window.__authMode || 'login';
+
+  if (!email || !password) {
+    errDiv.textContent = 'Please enter your email and password.';
+    errDiv.style.display = 'block';
+    return;
+  }
+
   errDiv.style.display = 'none';
   submitBtn.disabled = true;
   submitBtn.textContent = '…';
