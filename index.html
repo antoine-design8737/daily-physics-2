@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0f">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Daily Physics — stable & smart</title>
+<title>Daily Physics — stable arXiv reader</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 * {
@@ -15,7 +13,6 @@
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
-
 :root {
   --bg: #0a0a0f;
   --surface: #13131a;
@@ -36,576 +33,166 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --nav-h: 64px;
 }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--sans);
-  font-weight: 300;
-  min-height: 100dvh;
-  overscroll-behavior: none;
-}
-
-#app {
-  padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 12px);
-}
-
-/* bottom nav */
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; min-height: 100dvh; }
+#app { padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 12px); }
 #nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: calc(var(--nav-h) + var(--safe-bottom));
-  background: rgba(13,13,20,0.94);
-  backdrop-filter: blur(18px);
-  border-top: 0.5px solid var(--border2);
-  display: flex;
-  align-items: center;
-  padding-top: 6px;
-  z-index: 100;
-  justify-content: space-around;
+  position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--nav-h) + var(--safe-bottom));
+  background: rgba(13,13,20,0.94); backdrop-filter: blur(18px); border-top: 0.5px solid var(--border2);
+  display: flex; align-items: center; padding-top: 6px; z-index: 100; justify-content: space-around;
 }
-
 .nav-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px 0;
-  color: var(--muted);
-  transition: color 0.2s;
-  font-family: var(--sans);
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: none; border: none; cursor: pointer; padding: 6px 0;
+  color: var(--muted); transition: color 0.2s; font-family: var(--sans);
 }
-
-.nav-btn.active {
-  color: var(--accent);
-}
-
-.nav-btn svg {
-  width: 22px;
-  height: 22px;
-  stroke-width: 1.6;
-}
-
-.nav-btn span {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-}
-
-.nav-wrap {
-  position: relative;
-}
-
+.nav-btn.active { color: var(--accent); }
+.nav-btn svg { width: 22px; height: 22px; stroke-width: 1.6; }
+.nav-btn span { font-size: 10px; font-weight: 500; letter-spacing: 0.03em; }
+.nav-wrap { position: relative; }
 .nav-badge {
-  position: absolute;
-  top: -6px;
-  right: -10px;
-  background: var(--like);
-  color: #fff;
-  font-size: 9px;
-  font-weight: 600;
-  border-radius: 40px;
-  padding: 2px 5px;
-  min-width: 16px;
-  text-align: center;
-  display: none;
-  font-family: var(--mono);
+  position: absolute; top: -6px; right: -10px; background: var(--like); color: #fff;
+  font-size: 9px; font-weight: 600; border-radius: 40px; padding: 2px 5px;
+  min-width: 16px; text-align: center; display: none; font-family: var(--mono);
 }
-
-/* pages */
-.page {
-  display: none;
-  padding: calc(var(--safe-top) + 16px) 20px 0;
-  max-width: 520px;
-  margin: 0 auto;
-}
-
-.page.active {
-  display: block;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 22px;
-}
-
-.logo {
-  font-family: var(--serif);
-  font-size: 20px;
-  letter-spacing: -0.02em;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.logo-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-  display: inline-block;
-  animation: pulse 3s ease infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.7); }
-}
-
-.date-chip {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 40px;
-  padding: 5px 12px;
-}
-
-.page-title {
-  font-family: var(--serif);
-  font-size: 26px;
-  letter-spacing: -0.02em;
-  padding-bottom: 10px;
-}
-
-.cat-scroll {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  margin: 0 -20px 24px;
-  padding: 0 20px;
-}
-
-.cat-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.cat-btn {
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--muted);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 40px;
-  padding: 6px 15px;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.cat-btn.active {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: var(--accent-dim);
-}
-
-.state-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  padding: 50px 0;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.spinner {
-  width: 28px;
-  height: 28px;
-  border: 1.5px solid var(--border2);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.85s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.state-error {
-  background: rgba(220,60,60,0.08);
-  border: 1px solid rgba(220,60,60,0.2);
-  border-radius: 14px;
-  padding: 16px;
-  color: #f0a0a0;
-  font-size: 13px;
-  line-height: 1.5;
-  display: none;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.8;
-}
-
-.empty-state svg {
-  width: 38px;
-  height: 38px;
-  margin: 0 auto 14px;
-  opacity: 0.4;
-}
-
-.paper-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 22px 20px 20px;
-  position: relative;
-}
-
-.paper-meta {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-}
-
-.badge {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 500;
-  text-transform: uppercase;
-  color: var(--accent);
-  background: var(--accent-dim);
-  border: 1px solid rgba(200,184,245,0.25);
-  border-radius: 40px;
-  padding: 3px 10px;
-}
-
-.paper-date {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--muted);
-}
-
-.paper-title {
-  font-family: var(--serif);
-  font-size: 22px;
-  line-height: 1.3;
-  margin-bottom: 12px;
-}
-
-.paper-authors {
-  font-size: 13px;
-  color: var(--muted2);
-  margin-bottom: 18px;
-}
-
-.divider {
-  height: 1px;
-  background: var(--border);
-  margin: 16px 0;
-}
-
-.paper-abstract {
-  font-size: 13.5px;
-  line-height: 1.7;
-  color: rgba(240,239,232,0.8);
-  margin-bottom: 24px;
-}
-
-.action-row {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.btn-read {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--accent);
-  text-decoration: none;
-  background: var(--accent-dim);
-  border: 1px solid rgba(200,184,245,0.3);
-  border-radius: 14px;
-  padding: 10px 12px;
-  transition: 0.15s;
-}
-
-.btn-read:active {
-  transform: scale(0.97);
-}
-
-.btn-like {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  cursor: pointer;
-  transition: 0.2s;
-  color: var(--muted);
-}
-
-.btn-like.liked {
-  color: var(--like);
-  border-color: rgba(245,130,154,0.4);
-  background: var(--like-dim);
-}
-
-.stats-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.stat-box {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 10px 12px;
-}
-
-.stat-label {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--muted);
-}
-
-.stat-value {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text);
-  word-break: break-all;
-}
-
-.refresh-row {
-  display: flex;
-  justify-content: center;
-  margin-top: 24px;
-}
-
-.btn-refresh {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  border: 1px solid var(--border2);
-  border-radius: 40px;
-  padding: 10px 20px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--muted);
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.mini-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 14px 16px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-  transition: 0.15s;
-}
-
-.mini-card:active {
-  border-color: var(--border2);
-}
-
-.mini-badge {
-  font-family: var(--mono);
-  font-size: 9px;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 6px;
-}
-
-.mini-title {
-  font-family: var(--serif);
-  font-size: 15px;
-  line-height: 1.35;
-  margin-bottom: 4px;
-}
-
-.mini-authors {
-  font-size: 12px;
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.mini-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
-}
-
-.mini-like {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--muted);
-  padding: 4px;
-  transition: 0.15s;
-}
-
-.mini-like.liked {
-  color: var(--like);
-}
-
-.history-group {
-  margin-bottom: 24px;
-}
-
-.history-date-label {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted2);
-  margin-bottom: 12px;
-  padding-left: 4px;
-}
-
-.rec-hint {
-  font-size: 13px;
-  color: var(--muted);
-  background: var(--surface);
-  border-radius: 20px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-}
-
-.btn-rec-load {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  background: var(--accent-dim);
-  border: 1px solid rgba(200,184,245,0.3);
-  border-radius: 20px;
-  padding: 14px;
-  font-weight: 600;
-  color: var(--accent);
-  cursor: pointer;
-  margin-bottom: 20px;
-}
-
-.fade-in {
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+.page { display: none; padding: calc(var(--safe-top) + 16px) 20px 0; max-width: 520px; margin: 0 auto; }
+.page.active { display: block; }
+.page-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 22px; }
+.logo { font-family: var(--serif); font-size: 20px; display: flex; align-items: center; gap: 8px; }
+.logo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse 3s ease infinite; }
+@keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.7); } }
+.date-chip { font-family: var(--mono); font-size: 11px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 40px; padding: 5px 12px; }
+.page-title { font-family: var(--serif); font-size: 26px; letter-spacing: -0.02em; padding-bottom: 10px; }
+.cat-scroll { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; margin: 0 -20px 24px; padding: 0 20px; }
+.cat-scroll::-webkit-scrollbar { display: none; }
+.cat-btn { font-size: 12px; font-weight: 500; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 40px; padding: 6px 15px; white-space: nowrap; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+.cat-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+.state-loading { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 50px 0; color: var(--muted); font-size: 14px; }
+.spinner { width: 28px; height: 28px; border: 1.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.85s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.state-error { background: rgba(220,60,60,0.08); border: 1px solid rgba(220,60,60,0.2); border-radius: 14px; padding: 16px; color: #f0a0a0; font-size: 13px; line-height: 1.5; display: none; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 14px; line-height: 1.8; }
+.empty-state svg { width: 38px; height: 38px; margin: 0 auto 14px; opacity: 0.4; }
+.paper-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 22px 20px 20px; }
+.paper-meta { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.badge { font-family: var(--mono); font-size: 10px; font-weight: 500; text-transform: uppercase; color: var(--accent); background: var(--accent-dim); border-radius: 40px; padding: 3px 10px; }
+.paper-date { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.paper-title { font-family: var(--serif); font-size: 22px; line-height: 1.3; margin-bottom: 12px; }
+.paper-authors { font-size: 13px; color: var(--muted2); margin-bottom: 18px; }
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+.paper-abstract { font-size: 13.5px; line-height: 1.7; color: rgba(240,239,232,0.8); margin-bottom: 24px; }
+.action-row { display: flex; gap: 12px; margin-bottom: 16px; }
+.btn-read { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--accent); text-decoration: none; background: var(--accent-dim); border-radius: 14px; padding: 10px 12px; transition: 0.15s; }
+.btn-like { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; cursor: pointer; transition: 0.2s; color: var(--muted); }
+.btn-like.liked { color: var(--like); border-color: rgba(245,130,154,0.4); background: var(--like-dim); }
+.stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+.stat-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; }
+.stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+.stat-value { font-family: var(--mono); font-size: 11px; color: var(--text); word-break: break-all; }
+.refresh-row { display: flex; justify-content: center; margin-top: 24px; }
+.btn-refresh { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid var(--border2); border-radius: 40px; padding: 10px 20px; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; transition: 0.2s; }
+.mini-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; width: 100%; text-align: left; }
+.mini-badge { font-family: var(--mono); font-size: 9px; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+.mini-title { font-family: var(--serif); font-size: 15px; line-height: 1.35; margin-bottom: 4px; }
+.mini-authors { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.mini-like { background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; }
+.mini-like.liked { color: var(--like); }
+.history-group { margin-bottom: 24px; }
+.history-date-label { font-family: var(--mono); font-size: 11px; color: var(--muted2); margin-bottom: 12px; padding-left: 4px; }
+.rec-hint { font-size: 13px; color: var(--muted); background: var(--surface); border-radius: 20px; padding: 12px 16px; margin-bottom: 20px; }
+.btn-rec-load { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: var(--accent-dim); border-radius: 20px; padding: 14px; font-weight: 600; color: var(--accent); cursor: pointer; margin-bottom: 20px; }
+.fade-in { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
 <div id="app">
   <div class="page active" id="page-today">
-    <div class="page-header">
-      <div class="logo"><span class="logo-dot"></span>Daily Physics</div>
-      <div class="date-chip" id="date-chip"></div>
-    </div>
+    <div class="page-header"><div class="logo"><span class="logo-dot"></span>Daily Physics</div><div class="date-chip" id="date-chip"></div></div>
     <div class="cat-scroll" id="cat-scroll"></div>
-    <div class="state-loading" id="today-loading"><div class="spinner"></div><span>Fetching today's paper...</span></div>
+    <div class="state-loading" id="today-loading"><div class="spinner"></div><span>Fetching paper...</span></div>
     <div class="state-error" id="today-error"></div>
     <div id="today-paper" style="display:none">
       <div class="paper-card fade-in">
         <div class="paper-meta"><span class="badge" id="t-badge"></span><span class="paper-date" id="t-date"></span></div>
         <h2 class="paper-title" id="t-title"></h2>
-        <p class="paper-authors" id="t-authors"></p>
-        <div class="divider"></div>
+        <p class="paper-authors" id="t-authors"></p><div class="divider"></div>
         <p class="paper-abstract" id="t-abstract"></p>
-        <div class="action-row">
-          <a class="btn-read" id="t-link" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Read</a>
-          <button class="btn-like" id="t-like"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
-        </div>
+        <div class="action-row"><a class="btn-read" id="t-link" target="_blank">📄 Read</a><button class="btn-like" id="t-like">♥</button></div>
         <div class="stats-row"><div class="stat-box"><div class="stat-label">arXiv ID</div><div class="stat-value" id="t-id"></div></div><div class="stat-box"><div class="stat-label">Field</div><div class="stat-value" id="t-field"></div></div></div>
       </div>
       <div class="refresh-row"><button class="btn-refresh" id="refresh-btn">⟳ Random paper</button></div>
-      <footer style="text-align:center; font-size:10px; margin-top:24px; opacity:0.4">arXiv · daily discoveries</footer>
     </div>
   </div>
-  <div class="page" id="page-liked"><div class="page-header"><div class="page-title">Liked</div><button class="btn-refresh" id="liked-clear" style="font-size:12px">Clear all</button></div><div id="liked-list"></div></div>
+  <div class="page" id="page-liked"><div class="page-header"><div class="page-title">Liked</div><button class="btn-refresh" id="liked-clear">Clear all</button></div><div id="liked-list"></div></div>
   <div class="page" id="page-history"><div class="page-header"><div class="page-title">History</div></div><div id="history-list"></div></div>
-  <div class="page" id="page-rec"><div class="page-header"><div class="page-title">For You</div></div><p class="rec-hint" id="rec-hint"></p><button class="btn-rec-load" id="rec-load-btn" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Generate recommendations</button><div class="state-loading" id="rec-loading" style="display:none"><div class="spinner"></div><span>Searching arXiv ...</span></div><div class="state-error" id="rec-error"></div><div class="rec-keywords" id="rec-keywords" style="font-size:11px; color:var(--muted); margin-bottom:16px; display:none"></div><div id="rec-list"></div></div>
+  <div class="page" id="page-rec"><div class="page-header"><div class="page-title">For You</div></div><p class="rec-hint" id="rec-hint"></p><button class="btn-rec-load" id="rec-load-btn">✨ Generate recommendations</button><div class="state-loading" id="rec-loading" style="display:none"><div class="spinner"></div><span>Searching arXiv...</span></div><div class="state-error" id="rec-error"></div><div id="rec-list"></div></div>
 </div>
-<nav id="nav"><button class="nav-btn active" data-page="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Today</span></button><button class="nav-btn" data-page="liked"><div class="nav-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span class="nav-badge" id="liked-badge"></span></div><span>Liked</span></button><button class="nav-btn" data-page="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg><span>History</span></button><button class="nav-btn" data-page="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>For You</span></button></nav>
+<nav id="nav">
+  <button class="nav-btn active" data-page="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Today</span></button>
+  <button class="nav-btn" data-page="liked"><div class="nav-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span class="nav-badge" id="liked-badge"></span></div><span>Liked</span></button>
+  <button class="nav-btn" data-page="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg><span>History</span></button>
+  <button class="nav-btn" data-page="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>For You</span></button>
+</nav>
 <script>
-// ---------- STORAGE ----------
-let liked = JSON.parse(localStorage.getItem('liked_v2') || '[]');
-let history = JSON.parse(localStorage.getItem('history_v2') || '[]');
+// ========== STORAGE & HELPERS ==========
+let liked = JSON.parse(localStorage.getItem('liked_v3') || '[]');
+let history = JSON.parse(localStorage.getItem('history_v3') || '[]');
 let currentPaper = null;
 let activeCat = null;
-let randomActive = false;
 
 const CATEGORIES = [
-  {id:'quant-ph', label:'Quantum'},
-  {id:'hep-th', label:'HEP Theory'},
-  {id:'astro-ph', label:'Astrophysics'},
-  {id:'cond-mat', label:'Condensed Matter'},
-  {id:'gr-qc', label:'Gravity'},
-  {id:'hep-ph', label:'Particle Physics'},
-  {id:'math-ph', label:'Math-Phys'},
-  {id:'nucl-th', label:'Nuclear'}
+  {id:'quant-ph', label:'Quantum'},{id:'hep-th', label:'HEP Theory'},{id:'astro-ph', label:'Astrophysics'},
+  {id:'cond-mat', label:'Condensed Matter'},{id:'gr-qc', label:'Gravity'},{id:'hep-ph', label:'Particle Physics'},
+  {id:'math-ph', label:'Math-Phys'},{id:'nucl-th', label:'Nuclear'}
 ];
-
 const STOPWORDS = new Set("the a an of in for on with to from by is are be this that we our their these which and or not as at it its via over under into has have been was were all also can both such than more two one three new low high large small using based show shows model models study studies effect effects approach method".split(' '));
 
-function saveLiked() { localStorage.setItem('liked_v2', JSON.stringify(liked)); updateBadge(); }
-function saveHistory() { localStorage.setItem('history_v2', JSON.stringify(history)); }
+function saveLiked() { localStorage.setItem('liked_v3', JSON.stringify(liked)); updateBadge(); }
+function saveHistory() { localStorage.setItem('history_v3', JSON.stringify(history)); }
 function updateBadge() { const b = document.getElementById('liked-badge'); if(liked.length) { b.style.display='block'; b.textContent=liked.length>99?'99+':liked.length; } else b.style.display='none'; }
 function isLiked(id) { return liked.some(p=>p.id===id); }
 function toggleLike(paper) { if(isLiked(paper.id)) liked = liked.filter(p=>p.id!==paper.id); else { liked.unshift(paper); if(liked.length>200) liked=liked.slice(0,200); } saveLiked(); return isLiked(paper.id); }
 function todayStr() { return new Date().toISOString().slice(0,10); }
 function fmtDate(str) { const t=todayStr(); const yest=new Date(Date.now()-86400000).toISOString().slice(0,10); if(str===t) return 'Today'; if(str===yest) return 'Yesterday'; return new Date(str).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}); }
 
-// ---------- ROBUST FETCH (AllOrigins + timeout) ----------
-async function fetchArxiv(queryUrl) {
-  const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(queryUrl)}`;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
-  try {
-    const res = await fetch(proxy, { signal: controller.signal });
-    clearTimeout(timeout);
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    return new DOMParser().parseFromString(text, 'text/xml');
-  } catch(e) {
-    clearTimeout(timeout);
-    throw new Error('Network or CORS issue, please retry');
+// ========== ROBUST FETCH with dual proxy + retries ==========
+async function fetchWithRetry(url, retries=2) {
+  const proxies = [
+    (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`
+  ];
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    for (let pIdx = 0; pIdx < proxies.length; pIdx++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const proxyUrl = proxies[pIdx](url);
+        const res = await fetch(proxyUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        if (text.trim().startsWith('<?xml') || text.includes('<feed')) {
+          return new DOMParser().parseFromString(text, 'text/xml');
+        } else {
+          throw new Error('Invalid XML response');
+        }
+      } catch (err) {
+        console.warn(`Proxy ${pIdx} attempt ${attempt} failed:`, err);
+        if (attempt === retries && pIdx === proxies.length-1) throw new Error(`CORS/network error after retries`);
+        await new Promise(r => setTimeout(r, 500 * (attempt+1)));
+      }
+    }
   }
+  throw new Error('Unable to fetch from arXiv');
 }
 
-// parse paper from XML entry with primary category
 function parsePaperEntry(entry, forcedCat=null) {
   const title = entry.querySelector('title')?.textContent?.replace(/\s+/g,' ').trim() || 'Untitled';
   const summary = entry.querySelector('summary')?.textContent?.replace(/\s+/g,' ').trim() || '';
   const authors = [...entry.querySelectorAll('author name')].map(a=>a.textContent).join(', ');
   let idRaw = entry.querySelector('id')?.textContent || '';
-  const id = idRaw.split('/abs/')[1] || idRaw.split('/')[idRaw.split('/').length-1];
+  const id = idRaw.split('/abs/')[1] || idRaw.split('/').pop();
   const published = entry.querySelector('published')?.textContent?.slice(0,10) || '';
   let category = forcedCat;
   if(!category) {
@@ -613,42 +200,39 @@ function parsePaperEntry(entry, forcedCat=null) {
     if(primary) category = primary.getAttribute('term');
     else category = entry.querySelector('category')?.getAttribute('term') || 'physics';
   }
-  const catObj = CATEGORIES.find(c=>c.id===category) || {id:category, label:category};
+  const catObj = CATEGORIES.find(c=>c.id===category) || {id:category, label:category.toUpperCase()};
   return { id, title, summary, authors, cat:category, catLabel:catObj.label, pub:published, url:`https://arxiv.org/abs/${id}` };
 }
 
-// fetch random paper from category with smart offset
-async function fetchPaperFromCategory(catId, randomOffsetSeed=null) {
-  const seed = randomOffsetSeed !== undefined ? randomOffsetSeed : Math.floor(Math.random() * 5000);
-  const start = Math.min(seed % 4000, 3800);
-  const url = `https://export.arxiv.org/api/query?search_query=cat:${catId}&start=${start}&max_results=12&sortBy=submittedDate&sortOrder=descending`;
-  const xml = await fetchArxiv(url);
+// fetch random paper from a category with variable offset
+async function fetchRandomPaper(catId, seedOffset=null) {
+  const offset = (seedOffset !== null ? seedOffset : Math.floor(Math.random() * 4000)) % 3500;
+  const url = `https://export.arxiv.org/api/query?search_query=cat:${catId}&start=${offset}&max_results=15&sortBy=submittedDate&sortOrder=descending`;
+  const xml = await fetchWithRetry(url);
   const entries = [...xml.querySelectorAll('entry')];
-  if(entries.length === 0) throw new Error(`No papers in ${catId}`);
+  if(!entries.length) throw new Error(`No papers in ${catId}`);
   const pick = Math.floor(Math.random() * entries.length);
-  const paper = parsePaperEntry(entries[pick], catId);
-  return paper;
+  return parsePaperEntry(entries[pick], catId);
 }
 
-// TODAY'S PAPER (deterministic seed per day + optional random override)
+// deterministic daily seed + optional random override
 function todaySeed() { const d=new Date(); return d.getFullYear()*366 + (d.getMonth()+1)*32 + d.getDate(); }
 
 async function loadTodayPaper(randomMode=false, specificCat=null) {
-  const loadingDiv = document.getElementById('today-loading');
+  const loading = document.getElementById('today-loading');
   const errorDiv = document.getElementById('today-error');
   const paperDiv = document.getElementById('today-paper');
-  loadingDiv.style.display = 'flex';
+  loading.style.display = 'flex';
   errorDiv.style.display = 'none';
   paperDiv.style.display = 'none';
   try {
     let cat = specificCat || activeCat;
     if(!cat) {
-      const seedVal = randomMode ? Math.random() : todaySeed();
-      const idx = Math.floor(seedVal * 1000) % CATEGORIES.length;
+      const idx = randomMode ? Math.floor(Math.random()*CATEGORIES.length) : (todaySeed() % CATEGORIES.length);
       cat = CATEGORIES[idx].id;
     }
     const seedOffset = randomMode ? Math.floor(Math.random()*6000) : (todaySeed() * 13) % 5000;
-    const paper = await fetchPaperFromCategory(cat, seedOffset);
+    const paper = await fetchRandomPaper(cat, seedOffset);
     currentPaper = paper;
     // add to history (avoid duplicate today)
     history = history.filter(h => !(h.date === todayStr() && h.paper.id === paper.id));
@@ -656,12 +240,13 @@ async function loadTodayPaper(randomMode=false, specificCat=null) {
     if(history.length > 280) history = history.slice(0,280);
     saveHistory();
     renderTodayUI(paper);
-    loadingDiv.style.display = 'none';
+    loading.style.display = 'none';
     paperDiv.style.display = 'block';
   } catch(err) {
-    loadingDiv.style.display = 'none';
+    loading.style.display = 'none';
     errorDiv.style.display = 'block';
-    errorDiv.textContent = `⚠️ ${err.message}. Tap refresh or switch category.`;
+    errorDiv.innerHTML = `⚠️ ${err.message}<br><button class="btn-refresh" id="manual-retry" style="margin-top:12px;">Retry now</button>`;
+    document.getElementById('manual-retry')?.addEventListener('click', ()=>loadTodayPaper(randomMode, specificCat), {once:true});
   }
 }
 
@@ -669,18 +254,21 @@ function renderTodayUI(p) {
   document.getElementById('t-badge').textContent = p.cat;
   document.getElementById('t-date').textContent = p.pub ? `submitted ${p.pub}` : '';
   document.getElementById('t-title').textContent = p.title;
-  document.getElementById('t-authors').textContent = p.authors.length>130 ? p.authors.slice(0,130)+'…' : p.authors;
-  document.getElementById('t-abstract').textContent = p.summary.length>700 ? p.summary.slice(0,700)+'…' : p.summary;
+  document.getElementById('t-authors').textContent = p.authors.length>140 ? p.authors.slice(0,140)+'…' : p.authors;
+  document.getElementById('t-abstract').textContent = p.summary.length>720 ? p.summary.slice(0,720)+'…' : p.summary;
   document.getElementById('t-link').href = p.url;
   document.getElementById('t-id').textContent = p.id;
   document.getElementById('t-field').textContent = p.catLabel;
   const likeBtn = document.getElementById('t-like');
   const likedState = isLiked(p.id);
   likeBtn.classList.toggle('liked', likedState);
-  likeBtn.querySelector('svg').setAttribute('fill', likedState ? 'currentColor' : 'none');
+  likeBtn.textContent = likedState ? '❤️' : '♡';
 }
+// Toggle like from today
+document.getElementById('t-like').onclick = () => { if(currentPaper) { toggleLike(currentPaper); renderTodayUI(currentPaper); renderLikedList(); renderHistoryList(); } };
+document.getElementById('refresh-btn').onclick = () => loadTodayPaper(true, activeCat);
 
-// category bar
+// Category bar
 const strip = document.getElementById('cat-scroll');
 CATEGORIES.forEach(cat => {
   const btn = document.createElement('button');
@@ -690,111 +278,113 @@ CATEGORIES.forEach(cat => {
     document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     activeCat = cat.id;
-    randomActive = false;
     loadTodayPaper(false, activeCat);
   };
   strip.appendChild(btn);
 });
 document.getElementById('date-chip').innerText = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-document.getElementById('refresh-btn').onclick = () => { randomActive=true; loadTodayPaper(true, activeCat); };
-document.getElementById('t-like').onclick = () => { if(currentPaper) { toggleLike(currentPaper); renderTodayUI(currentPaper); renderLikedList(); } };
 
-// LIKED page
+// ========== LIKED PAGE ==========
 function renderLikedList() {
   const container = document.getElementById('liked-list');
-  if(!liked.length) { container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>No liked papers yet.<br>Tap ♥ on any paper.</div>`; return; }
+  if(!liked.length) { container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>No liked papers yet.<br>Tap ♡ on any paper.</div>`; return; }
   container.innerHTML = liked.map(p => miniCardHTML(p, true)).join('');
-  bindMiniCardEvents(container, (id)=>liked.find(p=>p.id===id), (id,btnEl)=>{
+  bindMiniCardEvents(container, (id)=>liked.find(p=>p.id===id), (id)=>{
     const paper = liked.find(p=>p.id===id);
-    if(paper) { toggleLike(paper); renderLikedList(); if(currentPaper?.id===id) renderTodayUI(currentPaper); }
+    if(paper) { toggleLike(paper); renderLikedList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); renderHistoryList(); }
   });
 }
 document.getElementById('liked-clear').onclick = () => { if(liked.length && confirm('Remove all liked papers?')) { liked=[]; saveLiked(); renderLikedList(); if(currentPaper) renderTodayUI(currentPaper); } };
 
-// HISTORY
+// ========== HISTORY PAGE ==========
 function renderHistoryList() {
   const container = document.getElementById('history-list');
   if(!history.length) { container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg>No history yet.</div>`; return; }
   const groups = {};
   history.forEach(h=>{ if(!groups[h.date]) groups[h.date]=[]; groups[h.date].push(h.paper); });
   container.innerHTML = Object.entries(groups).map(([date, papers])=>`<div class="history-group"><div class="history-date-label">${fmtDate(date)}</div>${papers.map(p=>miniCardHTML(p, isLiked(p.id))).join('')}</div>`).join('');
-  bindMiniCardEvents(container, (id)=>history.find(h=>h.paper.id===id)?.paper, (id,btnEl)=>{
+  bindMiniCardEvents(container, (id)=>history.find(h=>h.paper.id===id)?.paper, (id)=>{
     const paper = history.find(h=>h.paper.id===id)?.paper;
-    if(paper) { const newState = toggleLike(paper); renderHistoryList(); renderLikedList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); }
+    if(paper) { toggleLike(paper); renderHistoryList(); renderLikedList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); }
   });
 }
 
-// Mini card helper
 function miniCardHTML(p, likedState) {
-  return `<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat||'arxiv'}</div><div class="mini-title">${p.title.slice(0,85)}${p.title.length>85?'…':''}</div><div class="mini-authors">${p.authors.slice(0,65)}${p.authors.length>65?'…':''}</div><div class="mini-row"><span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.id}</span><button class="mini-like ${likedState?'liked':''}" data-id="${p.id}"><svg viewBox="0 0 24 24" width="16" height="16" fill="${likedState?'currentColor':'none'}" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button></div></button>`;
+  return `<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat||'arxiv'}</div><div class="mini-title">${p.title.slice(0,85)}${p.title.length>85?'…':''}</div><div class="mini-authors">${p.authors.slice(0,65)}${p.authors.length>65?'…':''}</div><div class="mini-row"><span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.id}</span><button class="mini-like ${likedState?'liked':''}" data-id="${p.id}">${likedState?'❤️':'♡'}</button></div></button>`;
 }
 function bindMiniCardEvents(container, getPaperById, onLikeToggle) {
   container.querySelectorAll('.mini-card').forEach(card => {
-    card.onclick = (e) => { if(e.target.closest('.mini-like')) return; const p = getPaperById(card.dataset.id); if(p) window.open(p.url, '_blank'); };
+    card.onclick = (e) => { if(e.target.classList.contains('mini-like')) return; const p = getPaperById(card.dataset.id); if(p) window.open(p.url, '_blank'); };
   });
   container.querySelectorAll('.mini-like').forEach(btn => {
-    btn.onclick = (e) => { e.stopPropagation(); onLikeToggle(btn.dataset.id, btn); };
+    btn.onclick = (e) => { e.stopPropagation(); onLikeToggle(btn.dataset.id); };
   });
 }
 
-// ------ RECOMMENDATIONS (smart keywords + AND query) ------
-function extractKeywordsFromPapers(papers) {
+// ========== RECOMMENDATIONS (robust keyword extraction + query) ==========
+function extractKeywords(papers) {
   const freq={};
-  const texts = papers.map(p=>(p.title+' '+p.summary).toLowerCase()).join(' ');
-  const words = texts.match(/\b[a-z]{4,}\b/g) || [];
+  const text = papers.map(p=>(p.title+' '+p.summary).toLowerCase()).join(' ');
+  const words = text.match(/\b[a-z]{4,}\b/g) || [];
   words.forEach(w=>{ if(!STOPWORDS.has(w) && !w.match(/^\d/)) freq[w]=(freq[w]||0)+1; });
   return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
 }
-async function generateRecs() {
+
+async function generateRecommendations() {
   const btn = document.getElementById('rec-load-btn');
   const loading = document.getElementById('rec-loading');
   const errorDiv = document.getElementById('rec-error');
   const recList = document.getElementById('rec-list');
-  const kwSpan = document.getElementById('rec-keywords');
   btn.style.display = 'none';
   loading.style.display = 'flex';
   errorDiv.style.display = 'none';
   recList.innerHTML = '';
-  kwSpan.style.display = 'none';
   const seedPapers = [];
   if(currentPaper) seedPapers.push(currentPaper);
-  seedPapers.push(...liked.slice(0,4));
+  seedPapers.push(...liked.slice(0,5));
   if(seedPapers.length===0) {
-    errorDiv.style.display='block'; errorDiv.textContent='⚠ Like a few papers first to get smart recommendations.'; loading.style.display='none'; btn.style.display='flex'; return;
+    errorDiv.style.display='block'; errorDiv.textContent='⚠ Like a few papers first or open today’s paper to get recommendations.';
+    loading.style.display='none'; btn.style.display='flex'; return;
   }
-  const keywords = extractKeywordsFromPapers(seedPapers);
-  if(keywords.length===0) { errorDiv.style.display='block'; errorDiv.textContent='Not enough terms, try liking more distinct papers.'; loading.style.display='none'; btn.style.display='flex'; return; }
+  const keywords = extractKeywords(seedPapers);
+  if(keywords.length===0) { errorDiv.style.display='block'; errorDiv.textContent='Not enough keywords, try liking more diverse papers.'; loading.style.display='none'; btn.style.display='flex'; return; }
   const query = keywords.slice(0,3).map(k=>`all:${k}`).join('+AND+');
-  const url = `https://export.arxiv.org/api/query?search_query=${query}&start=0&max_results=25&sortBy=relevance`;
+  const url = `https://export.arxiv.org/api/query?search_query=${query}&start=0&max_results=30&sortBy=relevance`;
   try {
-    const xml = await fetchArxiv(url);
+    const xml = await fetchWithRetry(url);
     const entries = [...xml.querySelectorAll('entry')];
-    if(!entries.length) throw new Error('No results from arXiv');
+    if(!entries.length) throw new Error('No recommendations found.');
     const seenIds = new Set([...(currentPaper?[currentPaper.id]:[]), ...liked.map(p=>p.id)]);
-    const recPapers = entries.map(entry=>parsePaperEntry(entry)).filter(p=>!seenIds.has(p.id)).slice(0,10);
-    if(recPapers.length===0) throw new Error('All recommended papers already liked/seen, try different categories');
-    kwSpan.textContent = `🔍 keywords: ${keywords.slice(0,5).join(', ')}`;
-    kwSpan.style.display = 'block';
+    let recPapers = entries.map(entry=>parsePaperEntry(entry)).filter(p=>!seenIds.has(p.id)).slice(0,12);
+    if(recPapers.length===0) throw new Error('All found papers already in liked/history.');
     recList.innerHTML = recPapers.map(p=>miniCardHTML(p, isLiked(p.id))).join('');
-    bindMiniCardEvents(recList, (id)=>recPapers.find(p=>p.id===id), (id,btnEl)=>{
+    bindMiniCardEvents(recList, (id)=>recPapers.find(p=>p.id===id), (id)=>{
       const paper = recPapers.find(p=>p.id===id);
-      if(paper) { const newLiked = toggleLike(paper); renderLikedList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); const newState = isLiked(paper.id); btnEl.classList.toggle('liked',newState); btnEl.querySelector('svg')?.setAttribute('fill', newState?'currentColor':'none'); }
+      if(paper) { toggleLike(paper); renderLikedList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); renderHistoryList(); const newState = isLiked(paper.id); const likeBtn = recList.querySelector(`.mini-like[data-id="${id}"]`); if(likeBtn) { likeBtn.classList.toggle('liked',newState); likeBtn.textContent = newState?'❤️':'♡'; } }
     });
     loading.style.display = 'none';
-  } catch(e) {
+  } catch(err) {
     loading.style.display = 'none';
     errorDiv.style.display = 'block';
-    errorDiv.textContent = `⚠️ ${e.message}`;
+    errorDiv.textContent = `⚠️ ${err.message}`;
     btn.style.display = 'flex';
   }
 }
+
 function setupRecPage() {
   const hint = document.getElementById('rec-hint');
   const btn = document.getElementById('rec-load-btn');
-  const hasData = liked.length > 0 || currentPaper;
-  if(hasData) { hint.textContent = `✨ Based on ${liked.length} liked paper(s) + today's reading.`; btn.style.display = 'flex'; btn.onclick = generateRecs; }
-  else { hint.textContent = '❤️ Like papers or view today\'s paper, then get tailored recommendations.'; btn.style.display = 'none'; }
+  if(liked.length || currentPaper) {
+    hint.textContent = `✨ Based on ${liked.length} liked paper(s) + today's reading. Click below.`;
+    btn.style.display = 'flex';
+    btn.onclick = generateRecommendations;
+  } else {
+    hint.textContent = '❤️ Like papers or view today’s paper, then tap "Generate recommendations".';
+    btn.style.display = 'none';
+  }
 }
+
+// ========== PAGE NAVIGATION ==========
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -805,9 +395,9 @@ function showPage(name) {
   if(name === 'rec') setupRecPage();
 }
 window.showPage = showPage;
-// global nav binding
 document.querySelectorAll('.nav-btn').forEach(btn=>{ btn.onclick = ()=>showPage(btn.dataset.page); });
-// initial load
+
+// ========== INIT ==========
 updateBadge();
 loadTodayPaper(false, null);
 renderLikedList();
