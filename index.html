@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0f">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛️</text></svg>">
 <title>Daily Physics — precise categories</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -184,7 +185,10 @@ function parseOpenAlexWork(work, categoryLabel = 'Physics') {
   const paperId = doi || work.id.split('/').pop();
   const pubDate = work.publication_date ? work.publication_date.slice(0,10) : '';
   let url = '#';
-  if (work.primary_location?.pdf_url) url = work.primary_location.pdf_url;
+  const arxivId = (work.primary_location?.landing_page_url || '').match(/arxiv\.org\/abs\/([\d.]+)/)?.[1]
+    || (work.id || '').match(/arxiv\.org\/abs\/([\d.]+)/)?.[1];
+  if (arxivId) url = `https://arxiv.org/abs/${arxivId}`;
+  else if (work.primary_location?.pdf_url) url = work.primary_location.pdf_url;
   else if (work.doi) url = work.doi;
   else url = work.id;
   return {
@@ -220,7 +224,7 @@ async function fetchValidCategoryPaper(category, attempt = 0) {
   
   // Build a search query: use the category's searchQuery + open access filter
   // Adding "open_access.is_oa:true" ensures we get free PDFs
-  const url = `https://api.openalex.org/works?search=${encodeURIComponent(category.searchQuery)}&filter=open_access.is_oa:true&sort=relevance_score:desc&page=${page}&per-page=25`;
+  const url = `https://api.openalex.org/works?search=${encodeURIComponent(category.searchQuery)}&filter=open_access.is_oa:true,locations.source.id:S4306400194&sort=relevance_score:desc&page=${page}&per-page=25`;
   
   const data = await fetchOpenAlex(url);
   if (!data.results || data.results.length === 0) {
@@ -397,7 +401,7 @@ async function generateRecommendations() {
   const keywords = extractKeywords(seedPapers);
   if(keywords.length === 0) { errorDiv.style.display='block'; errorDiv.textContent='Not enough keywords, try liking more diverse papers.'; loading.style.display='none'; btn.style.display='flex'; return; }
   const searchQuery = keywords.slice(0,3).join(' ');
-  const url = `https://api.openalex.org/works?search=${encodeURIComponent(searchQuery)}&filter=open_access.is_oa:true&sort=relevance_score:desc&per-page=20`;
+  const url = `https://api.openalex.org/works?search=${encodeURIComponent(searchQuery)}&filter=open_access.is_oa:true,locations.source.id:S4306400194&sort=relevance_score:desc&per-page=20`;
   try {
     const data = await fetchOpenAlex(url);
     if (!data.results || data.results.length === 0) throw new Error('No recommendations found.');
