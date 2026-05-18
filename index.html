@@ -119,19 +119,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 
 <script type="module">
 // FIREBASE CONFIG (your project)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBhSfk39qU3YlBA4etrNC_AvxUNxR15sDA",
-  authDomain: "physics-daily-89dd6.firebaseapp.com",
-  databaseURL: "https://physics-daily-89dd6-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "physics-daily-89dd6",
-  storageBucket: "physics-daily-89dd6.firebasestorage.app",
-  messagingSenderId: "476007239352",
-  appId: "1:476007239352:web:fa971840c944ca87e8ee4d"
-};
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBhSfk39qU3YlBA4etrNC_AvxUNxR15sDA",
+    authDomain: "physics-daily-89dd6.firebaseapp.com",
+    databaseURL: "https://physics-daily-89dd6-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "physics-daily-89dd6",
+    storageBucket: "physics-daily-89dd6.firebasestorage.app",
+    messagingSenderId: "476007239352",
+    appId: "1:476007239352:web:fa971840c944ca87e8ee4d"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
