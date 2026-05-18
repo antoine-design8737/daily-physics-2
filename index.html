@@ -134,11 +134,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 </div>
 
 <script>
-window.switchTab = function switchTab(tab) {
+window.switchTab = function(tab) {
   document.getElementById('tab-login').classList.toggle('active', tab==='login');
   document.getElementById('tab-signup').classList.toggle('active', tab==='signup');
   document.getElementById('auth-submit').textContent = tab==='login' ? 'Log in' : 'Create account';
-  document.getElementById('auth-submit').dataset.mode = tab;
+  // Use a plain global so the module script can always read the current value
+  window.__authMode = tab;
   document.getElementById('auth-err').style.display = 'none';
 }
 switchTab('login');
@@ -181,7 +182,7 @@ submitBtn.dataset.mode = 'login';
 submitBtn.onclick = async () => {
   const email    = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
-  const mode     = submitBtn.dataset.mode;
+  const mode     = window.__authMode || 'login';   // ← read shared global, not dataset
   errDiv.style.display = 'none';
   submitBtn.disabled = true;
   submitBtn.textContent = '…';
