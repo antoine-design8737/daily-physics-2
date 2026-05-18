@@ -129,27 +129,25 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
 .auth-btn{width:100%;padding:13px;background:var(--accent-dim);border:1px solid rgba(200,184,245,0.3);border-radius:12px;font-size:14px;font-weight:600;color:var(--accent);cursor:pointer;font-family:var(--sans);transition:.2s;margin-top:4px}
 .auth-btn:hover{background:rgba(200,184,245,0.2)}
 .auth-err{font-size:12px;color:#f0a0a0;background:rgba(220,60,60,0.08);border:1px solid rgba(220,60,60,0.2);border-radius:10px;padding:10px 12px;margin-top:12px;display:none;line-height:1.5}
-.auth-user-bar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
 .auth-email{font-family:var(--mono);font-size:11px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
 .btn-signout{background:none;border:1px solid var(--border);border-radius:40px;padding:4px 12px;font-size:11px;color:var(--muted);cursor:pointer;font-family:var(--sans)}
 </style>
 
 <script>
-// Global helper for tab switching (defined early, stays synchronous)
+// Global helper for tab switching
 window.switchTab = function(tab) {
-  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  const loginTab = document.getElementById('tab-login');
+  const signupTab = document.getElementById('tab-signup');
+  if (loginTab) loginTab.classList.toggle('active', tab === 'login');
+  if (signupTab) signupTab.classList.toggle('active', tab === 'signup');
   const submitBtn = document.getElementById('auth-submit-btn');
   if (submitBtn) submitBtn.textContent = tab === 'login' ? 'Log in' : 'Create account';
   window.__authMode = tab;
   const errDiv = document.getElementById('auth-err');
   if (errDiv) errDiv.style.display = 'none';
 };
-// Initial UI setup
 window.__authMode = 'login';
-document.addEventListener('DOMContentLoaded', () => {
-  window.switchTab('login');
-});
+document.addEventListener('DOMContentLoaded', () => window.switchTab('login'));
 </script>
 
 <script type="module">
@@ -166,16 +164,16 @@ import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/fireb
 const firebaseConfig = {
   apiKey: "AIzaSyBhSfk39qU3YlBA4etrNC_AvxUNxR15sDA",
   authDomain: "physics-daily-89dd6.firebaseapp.com",
-  databaseURL: "https://physics-daily-89dd6-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "physics-daily-89dd6",
   storageBucket: "physics-daily-89dd6.firebasestorage.app",
   messagingSenderId: "476007239352",
   appId: "1:476007239352:web:fa971840c944ca87e8ee4d"
 };
 
-const fbApp = initializeApp(firebaseConfig);
-const auth = getAuth(fbApp);
-const db = getFirestore(fbApp);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 let userId = null;
 let liked = [];
@@ -185,6 +183,7 @@ let activeCat = null;
 
 // Firestore helpers
 async function loadFromFirestore() {
+  if (!userId) return;
   const snap = await getDoc(doc(db, 'users', userId));
   if (snap.exists()) {
     const data = snap.data();
@@ -221,7 +220,7 @@ function toggleLike(paper) {
   return isLiked(paper.id);
 }
 
-// Helper: friendly Firebase errors
+// Friendly error messages
 function friendlyError(code) {
   const map = {
     'auth/email-already-in-use': 'That email already has an account. Try logging in.',
@@ -231,19 +230,23 @@ function friendlyError(code) {
     'auth/wrong-password': 'Incorrect password.',
     'auth/invalid-credential': 'Incorrect email or password.',
     'auth/too-many-requests': 'Too many attempts. Try again later.',
-    'auth/network-request-failed': 'Network error. Check your connection.'
+    'auth/network-request-failed': 'Network error. Check your connection.',
+    'auth/operation-not-allowed': 'Email/password sign-in is disabled in Firebase Console. Please enable it.',
+    'auth/unauthorized-domain': 'This domain is not authorized. Add it in Firebase Console → Authentication → Authorized domains.'
   };
   return map[code] || `Error: ${code}`;
 }
 
-// ----- AUTH SUBMIT (robust event listener) -----
+// ----- AUTH SUBMIT with proper async handling and timeout -----
 const authSubmitBtn = document.getElementById('auth-submit-btn');
 const authEmail = document.getElementById('auth-email');
 const authPassword = document.getElementById('auth-password');
 const authErrDiv = document.getElementById('auth-err');
 
+let authInProgress = false;
+
 async function handleAuthSubmit() {
-  if (!authSubmitBtn) return;
+  if (authInProgress) return;
   const email = authEmail.value.trim();
   const password = authPassword.value;
   const mode = window.__authMode || 'login';
@@ -254,31 +257,47 @@ async function handleAuthSubmit() {
     return;
   }
 
-  authErrDiv.style.display = 'none';
+  authInProgress = true;
   const originalText = authSubmitBtn.textContent;
   authSubmitBtn.disabled = true;
   authSubmitBtn.textContent = '…';
+  authErrDiv.style.display = 'none';
+
+  // Set a timeout to recover if Firebase hangs
+  const timeoutId = setTimeout(() => {
+    if (authInProgress) {
+      authErrDiv.textContent = 'Request timed out. Check your internet connection and try again.';
+      authErrDiv.style.display = 'block';
+      authSubmitBtn.disabled = false;
+      authSubmitBtn.textContent = originalText;
+      authInProgress = false;
+    }
+  }, 15000);
+
   try {
     if (mode === 'signup') {
       await createUserWithEmailAndPassword(auth, email, password);
     } else {
       await signInWithEmailAndPassword(auth, email, password);
     }
-    // On success, onAuthStateChanged will hide wall and boot app
+    // Success will trigger onAuthStateChanged
+    clearTimeout(timeoutId);
+    // Don't reset button here because the wall will disappear after redirect
   } catch (err) {
+    clearTimeout(timeoutId);
+    console.error("Firebase auth error:", err);
     authErrDiv.textContent = friendlyError(err.code);
     authErrDiv.style.display = 'block';
     authSubmitBtn.disabled = false;
     authSubmitBtn.textContent = originalText;
+    authInProgress = false;
   }
 }
 
-// attach event listener (no inline onclick flakiness)
+// Attach event listeners
 if (authSubmitBtn) {
   authSubmitBtn.addEventListener('click', handleAuthSubmit);
-  // allow Enter key in fields
-  const fields = [authEmail, authPassword];
-  fields.forEach(field => {
+  [authEmail, authPassword].forEach(field => {
     if (field) field.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') handleAuthSubmit();
     });
@@ -287,7 +306,7 @@ if (authSubmitBtn) {
 
 // ---------- AUTH STATE ----------
 onAuthStateChanged(auth, async (user) => {
-  if (!user) return; // still on auth wall
+  if (!user) return; // stay on auth wall
   userId = user.uid;
   await loadFromFirestore();
   
@@ -309,11 +328,11 @@ onAuthStateChanged(auth, async (user) => {
     };
   }
   
-  // Now boot full app
+  // Boot the full app after successful login
   bootApp();
 });
 
-// ---------- OPENALEX LOGIC ----------
+// ---------- OPENALEX & APP LOGIC (same as before, but bootApp only after auth) ----------
 function invertedToText(inv) {
   if (!inv) return '';
   const words = Object.entries(inv).sort((a,b) => a[1][0] - b[1][0]);
@@ -438,13 +457,11 @@ function renderTodayUI(p) {
   likeBtn.textContent = likedState ? '❤️' : '♡';
 }
 
-// Liked / History / Rec UI (simplified)
 function renderLikedList() {
   const container = document.getElementById('liked-list');
   if (!liked.length) { container.innerHTML = `<div class="empty-state">❤️ No liked papers yet.</div>`; return; }
   container.innerHTML = liked.map(p => `<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat||'physics'}</div><div class="mini-title">${p.title.slice(0,85)}</div><div class="mini-authors">${p.authors.slice(0,65)}</div><div class="mini-row"><span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.id.slice(0,20)}</span><button class="mini-like ${isLiked(p.id)?'liked':''}" data-id="${p.id}">${isLiked(p.id)?'❤️':'♡'}</button></div></button>`).join('');
-  document.querySelectorAll('.mini-card').forEach(c => c.onclick = (e) => { if(!e.target.classList.contains('mini-like')) window.open(liked.find(p=>p.id===c.dataset.id)?.url, '_blank'); });
-  document.querySelectorAll('.mini-like').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); const pid = btn.dataset.id; const paper = liked.find(p=>p.id===pid); if(paper) { toggleLike(paper); renderLikedList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); renderHistoryList(); } });
+  attachMiniCardEvents(container);
 }
 function renderHistoryList() {
   const container = document.getElementById('history-list');
@@ -452,9 +469,13 @@ function renderHistoryList() {
   const groups = {};
   history.forEach(h => { if(!groups[h.date]) groups[h.date]=[]; groups[h.date].push(h.paper); });
   container.innerHTML = Object.entries(groups).map(([date, papers]) => `<div class="history-group"><div class="history-date-label">${date===todayStr()?'Today':new Date(date).toLocaleDateString()}</div>${papers.map(p => `<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat||'physics'}</div><div class="mini-title">${p.title.slice(0,85)}</div><div class="mini-authors">${p.authors.slice(0,65)}</div><div class="mini-row"><span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.id.slice(0,20)}</span><button class="mini-like ${isLiked(p.id)?'liked':''}" data-id="${p.id}">${isLiked(p.id)?'❤️':'♡'}</button></div></button>`).join('')}</div>`).join('');
-  document.querySelectorAll('.mini-card').forEach(c => c.onclick = (e) => { if(!e.target.classList.contains('mini-like')) { const paper = history.find(h=>h.paper.id===c.dataset.id)?.paper; if(paper) window.open(paper.url, '_blank'); } });
-  document.querySelectorAll('.mini-like').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); const pid = btn.dataset.id; const entry = history.find(h=>h.paper.id===pid); if(entry) { toggleLike(entry.paper); renderHistoryList(); renderLikedList(); if(currentPaper?.id===entry.paper.id) renderTodayUI(currentPaper); } });
+  attachMiniCardEvents(container);
 }
+function attachMiniCardEvents(container) {
+  container.querySelectorAll('.mini-card').forEach(c => c.onclick = (e) => { if(!e.target.classList.contains('mini-like')) { const paper = liked.find(p=>p.id===c.dataset.id) || history.find(h=>h.paper.id===c.dataset.id)?.paper; if(paper) window.open(paper.url, '_blank'); } });
+  container.querySelectorAll('.mini-like').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); const pid = btn.dataset.id; const paper = liked.find(p=>p.id===pid) || history.find(h=>h.paper.id===pid)?.paper; if(paper) { toggleLike(paper); renderLikedList(); renderHistoryList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); } });
+}
+
 document.getElementById('liked-clear')?.addEventListener('click', () => { if(liked.length && confirm('Remove all liked papers?')) { liked=[]; saveLiked(); renderLikedList(); if(currentPaper) renderTodayUI(currentPaper); } });
 
 function bootApp() {
@@ -469,16 +490,19 @@ function bootApp() {
   });
   document.getElementById('refresh-btn').onclick = () => loadTodayPaper(true, activeCat);
   document.getElementById('t-like').onclick = () => { if(currentPaper) { toggleLike(currentPaper); renderTodayUI(currentPaper); renderLikedList(); renderHistoryList(); } };
-  // rec page simple init
+  
+  // Recommendation page basic
   const recBtn = document.getElementById('rec-load-btn');
   if (recBtn) recBtn.onclick = async () => { 
     document.getElementById('rec-loading').style.display='flex'; 
-    setTimeout(() => { document.getElementById('rec-loading').style.display='none'; document.getElementById('rec-list').innerHTML='<div class="empty-state">✨ Recs ready (demo). Like more papers for smarter suggestions.</div>'; }, 800);
+    setTimeout(() => { document.getElementById('rec-loading').style.display='none'; document.getElementById('rec-list').innerHTML='<div class="empty-state">✨ Recommendations demo. Like papers for smarter suggestions.</div>'; }, 800);
   };
+  
   updateBadge();
   loadTodayPaper(false, null);
   renderLikedList();
   renderHistoryList();
+  
   // page navigation
   window.showPage = (name) => {
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
