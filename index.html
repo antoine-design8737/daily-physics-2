@@ -3,106 +3,69 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0f">
-<title>Daily Physics — stable arXiv reader</title>
+<title>Daily Physics — resilient arXiv reader</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-:root {
-  --bg: #0a0a0f;
-  --surface: #13131a;
-  --surface2: #1a1a24;
-  --border: rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.12);
-  --text: #f0efe8;
-  --muted: #6a6a7a;
-  --muted2: #9a9aaa;
-  --accent: #c8b8f5;
-  --accent-dim: rgba(200,184,245,0.12);
-  --like: #f5829a;
-  --like-dim: rgba(245,130,154,0.12);
-  --serif: 'DM Serif Display', Georgia, serif;
-  --sans: 'DM Sans', sans-serif;
-  --mono: 'DM Mono', monospace;
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --nav-h: 64px;
-}
-body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; min-height: 100dvh; }
-#app { padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 12px); }
-#nav {
-  position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--nav-h) + var(--safe-bottom));
-  background: rgba(13,13,20,0.94); backdrop-filter: blur(18px); border-top: 0.5px solid var(--border2);
-  display: flex; align-items: center; padding-top: 6px; z-index: 100; justify-content: space-around;
-}
-.nav-btn {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
-  background: none; border: none; cursor: pointer; padding: 6px 0;
-  color: var(--muted); transition: color 0.2s; font-family: var(--sans);
-}
-.nav-btn.active { color: var(--accent); }
-.nav-btn svg { width: 22px; height: 22px; stroke-width: 1.6; }
-.nav-btn span { font-size: 10px; font-weight: 500; letter-spacing: 0.03em; }
-.nav-wrap { position: relative; }
-.nav-badge {
-  position: absolute; top: -6px; right: -10px; background: var(--like); color: #fff;
-  font-size: 9px; font-weight: 600; border-radius: 40px; padding: 2px 5px;
-  min-width: 16px; text-align: center; display: none; font-family: var(--mono);
-}
-.page { display: none; padding: calc(var(--safe-top) + 16px) 20px 0; max-width: 520px; margin: 0 auto; }
-.page.active { display: block; }
-.page-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 22px; }
-.logo { font-family: var(--serif); font-size: 20px; display: flex; align-items: center; gap: 8px; }
-.logo-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse 3s ease infinite; }
-@keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.7); } }
-.date-chip { font-family: var(--mono); font-size: 11px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 40px; padding: 5px 12px; }
-.page-title { font-family: var(--serif); font-size: 26px; letter-spacing: -0.02em; padding-bottom: 10px; }
-.cat-scroll { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; margin: 0 -20px 24px; padding: 0 20px; }
-.cat-scroll::-webkit-scrollbar { display: none; }
-.cat-btn { font-size: 12px; font-weight: 500; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 40px; padding: 6px 15px; white-space: nowrap; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
-.cat-btn.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
-.state-loading { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 50px 0; color: var(--muted); font-size: 14px; }
-.spinner { width: 28px; height: 28px; border: 1.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.85s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.state-error { background: rgba(220,60,60,0.08); border: 1px solid rgba(220,60,60,0.2); border-radius: 14px; padding: 16px; color: #f0a0a0; font-size: 13px; line-height: 1.5; display: none; }
-.empty-state { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 14px; line-height: 1.8; }
-.empty-state svg { width: 38px; height: 38px; margin: 0 auto 14px; opacity: 0.4; }
-.paper-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 22px 20px 20px; }
-.paper-meta { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
-.badge { font-family: var(--mono); font-size: 10px; font-weight: 500; text-transform: uppercase; color: var(--accent); background: var(--accent-dim); border-radius: 40px; padding: 3px 10px; }
-.paper-date { font-family: var(--mono); font-size: 10px; color: var(--muted); }
-.paper-title { font-family: var(--serif); font-size: 22px; line-height: 1.3; margin-bottom: 12px; }
-.paper-authors { font-size: 13px; color: var(--muted2); margin-bottom: 18px; }
-.divider { height: 1px; background: var(--border); margin: 16px 0; }
-.paper-abstract { font-size: 13.5px; line-height: 1.7; color: rgba(240,239,232,0.8); margin-bottom: 24px; }
-.action-row { display: flex; gap: 12px; margin-bottom: 16px; }
-.btn-read { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--accent); text-decoration: none; background: var(--accent-dim); border-radius: 14px; padding: 10px 12px; transition: 0.15s; }
-.btn-like { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; cursor: pointer; transition: 0.2s; color: var(--muted); }
-.btn-like.liked { color: var(--like); border-color: rgba(245,130,154,0.4); background: var(--like-dim); }
-.stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
-.stat-box { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; }
-.stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
-.stat-value { font-family: var(--mono); font-size: 11px; color: var(--text); word-break: break-all; }
-.refresh-row { display: flex; justify-content: center; margin-top: 24px; }
-.btn-refresh { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid var(--border2); border-radius: 40px; padding: 10px 20px; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; transition: 0.2s; }
-.mini-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; width: 100%; text-align: left; }
-.mini-badge { font-family: var(--mono); font-size: 9px; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
-.mini-title { font-family: var(--serif); font-size: 15px; line-height: 1.35; margin-bottom: 4px; }
-.mini-authors { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mini-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
-.mini-like { background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; }
-.mini-like.liked { color: var(--like); }
-.history-group { margin-bottom: 24px; }
-.history-date-label { font-family: var(--mono); font-size: 11px; color: var(--muted2); margin-bottom: 12px; padding-left: 4px; }
-.rec-hint { font-size: 13px; color: var(--muted); background: var(--surface); border-radius: 20px; padding: 12px 16px; margin-bottom: 20px; }
-.btn-rec-load { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: var(--accent-dim); border-radius: 20px; padding: 14px; font-weight: 600; color: var(--accent); cursor: pointer; margin-bottom: 20px; }
-.fade-in { animation: fadeIn 0.3s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1a1a24;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#f0efe8;--muted:#6a6a7a;--muted2:#9a9aaa;--accent:#c8b8f5;--accent-dim:rgba(200,184,245,0.12);--like:#f5829a;--like-dim:rgba(245,130,154,0.12);--serif:'DM Serif Display',Georgia,serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--nav-h:64px}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:300;min-height:100dvh}
+#app{padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 12px)}
+#nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + var(--safe-bottom));background:rgba(13,13,20,0.94);backdrop-filter:blur(18px);border-top:0.5px solid var(--border2);display:flex;align-items:center;padding-top:6px;z-index:100;justify-content:space-around}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;cursor:pointer;padding:6px 0;color:var(--muted);transition:color .2s;font-family:var(--sans)}
+.nav-btn.active{color:var(--accent)}
+.nav-btn svg{width:22px;height:22px;stroke-width:1.6}
+.nav-btn span{font-size:10px;font-weight:500;letter-spacing:.03em}
+.nav-wrap{position:relative}
+.nav-badge{position:absolute;top:-6px;right:-10px;background:var(--like);color:#fff;font-size:9px;font-weight:600;border-radius:40px;padding:2px 5px;min-width:16px;text-align:center;display:none;font-family:var(--mono)}
+.page{display:none;padding:calc(var(--safe-top) + 16px) 20px 0;max-width:520px;margin:0 auto}
+.page.active{display:block}
+.page-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:22px}
+.logo{font-family:var(--serif);font-size:20px;display:flex;align-items:center;gap:8px}
+.logo-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 3s ease infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.date-chip{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:5px 12px}
+.page-title{font-family:var(--serif);font-size:26px;letter-spacing:-.02em;padding-bottom:10px}
+.cat-scroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -20px 24px;padding:0 20px}
+.cat-scroll::-webkit-scrollbar{display:none}
+.cat-btn{font-size:12px;font-weight:500;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:40px;padding:6px 15px;white-space:nowrap;cursor:pointer;transition:all .2s;flex-shrink:0}
+.cat-btn.active{color:var(--accent);border-color:var(--accent);background:var(--accent-dim)}
+.state-loading{display:flex;flex-direction:column;align-items:center;gap:14px;padding:50px 0;color:var(--muted);font-size:14px}
+.spinner{width:28px;height:28px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .85s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.state-error{background:rgba(220,60,60,0.08);border:1px solid rgba(220,60,60,0.2);border-radius:14px;padding:16px;color:#f0a0a0;font-size:13px;line-height:1.5;display:none}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;line-height:1.8}
+.empty-state svg{width:38px;height:38px;margin:0 auto 14px;opacity:.4}
+.paper-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:22px 20px 20px}
+.paper-meta{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.badge{font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;color:var(--accent);background:var(--accent-dim);border-radius:40px;padding:3px 10px}
+.paper-date{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.paper-title{font-family:var(--serif);font-size:22px;line-height:1.3;margin-bottom:12px}
+.paper-authors{font-size:13px;color:var(--muted2);margin-bottom:18px}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.paper-abstract{font-size:13.5px;line-height:1.7;color:rgba(240,239,232,0.8);margin-bottom:24px}
+.action-row{display:flex;gap:12px;margin-bottom:16px}
+.btn-read{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;color:var(--accent);text-decoration:none;background:var(--accent-dim);border-radius:14px;padding:10px 12px;transition:.15s}
+.btn-like{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;cursor:pointer;transition:.2s;color:var(--muted);font-size:20px}
+.btn-like.liked{color:var(--like);border-color:rgba(245,130,154,0.4);background:var(--like-dim)}
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.stat-box{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:10px 12px}
+.stat-label{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.stat-value{font-family:var(--mono);font-size:11px;color:var(--text);word-break:break-all}
+.refresh-row{display:flex;justify-content:center;margin-top:24px}
+.btn-refresh{display:flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--border2);border-radius:40px;padding:10px 20px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:.2s}
+.mini-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:10px;cursor:pointer;width:100%;text-align:left}
+.mini-badge{font-family:var(--mono);font-size:9px;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.mini-title{font-family:var(--serif);font-size:15px;line-height:1.35;margin-bottom:4px}
+.mini-authors{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.mini-like{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;font-size:14px}
+.mini-like.liked{color:var(--like)}
+.history-group{margin-bottom:24px}
+.history-date-label{font-family:var(--mono);font-size:11px;color:var(--muted2);margin-bottom:12px;padding-left:4px}
+.rec-hint{font-size:13px;color:var(--muted);background:var(--surface);border-radius:20px;padding:12px 16px;margin-bottom:20px}
+.btn-rec-load{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--accent-dim);border-radius:20px;padding:14px;font-weight:600;color:var(--accent);cursor:pointer;margin-bottom:20px}
+.fade-in{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
@@ -110,7 +73,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
   <div class="page active" id="page-today">
     <div class="page-header"><div class="logo"><span class="logo-dot"></span>Daily Physics</div><div class="date-chip" id="date-chip"></div></div>
     <div class="cat-scroll" id="cat-scroll"></div>
-    <div class="state-loading" id="today-loading"><div class="spinner"></div><span>Fetching paper...</span></div>
+    <div class="state-loading" id="today-loading"><div class="spinner"></div><span>Connecting to arXiv...</span></div>
     <div class="state-error" id="today-error"></div>
     <div id="today-paper" style="display:none">
       <div class="paper-card fade-in">
@@ -118,7 +81,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
         <h2 class="paper-title" id="t-title"></h2>
         <p class="paper-authors" id="t-authors"></p><div class="divider"></div>
         <p class="paper-abstract" id="t-abstract"></p>
-        <div class="action-row"><a class="btn-read" id="t-link" target="_blank">📄 Read</a><button class="btn-like" id="t-like">♥</button></div>
+        <div class="action-row"><a class="btn-read" id="t-link" target="_blank">📄 Read</a><button class="btn-like" id="t-like">♡</button></div>
         <div class="stats-row"><div class="stat-box"><div class="stat-label">arXiv ID</div><div class="stat-value" id="t-id"></div></div><div class="stat-box"><div class="stat-label">Field</div><div class="stat-value" id="t-field"></div></div></div>
       </div>
       <div class="refresh-row"><button class="btn-refresh" id="refresh-btn">⟳ Random paper</button></div>
@@ -136,8 +99,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 </nav>
 <script>
 // ========== STORAGE & HELPERS ==========
-let liked = JSON.parse(localStorage.getItem('liked_v3') || '[]');
-let history = JSON.parse(localStorage.getItem('history_v3') || '[]');
+let liked = JSON.parse(localStorage.getItem('liked_v4') || '[]');
+let history = JSON.parse(localStorage.getItem('history_v4') || '[]');
 let currentPaper = null;
 let activeCat = null;
 
@@ -148,45 +111,52 @@ const CATEGORIES = [
 ];
 const STOPWORDS = new Set("the a an of in for on with to from by is are be this that we our their these which and or not as at it its via over under into has have been was were all also can both such than more two one three new low high large small using based show shows model models study studies effect effects approach method".split(' '));
 
-function saveLiked() { localStorage.setItem('liked_v3', JSON.stringify(liked)); updateBadge(); }
-function saveHistory() { localStorage.setItem('history_v3', JSON.stringify(history)); }
+function saveLiked() { localStorage.setItem('liked_v4', JSON.stringify(liked)); updateBadge(); }
+function saveHistory() { localStorage.setItem('history_v4', JSON.stringify(history)); }
 function updateBadge() { const b = document.getElementById('liked-badge'); if(liked.length) { b.style.display='block'; b.textContent=liked.length>99?'99+':liked.length; } else b.style.display='none'; }
 function isLiked(id) { return liked.some(p=>p.id===id); }
 function toggleLike(paper) { if(isLiked(paper.id)) liked = liked.filter(p=>p.id!==paper.id); else { liked.unshift(paper); if(liked.length>200) liked=liked.slice(0,200); } saveLiked(); return isLiked(paper.id); }
 function todayStr() { return new Date().toISOString().slice(0,10); }
 function fmtDate(str) { const t=todayStr(); const yest=new Date(Date.now()-86400000).toISOString().slice(0,10); if(str===t) return 'Today'; if(str===yest) return 'Yesterday'; return new Date(str).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}); }
 
-// ========== ROBUST FETCH with dual proxy + retries ==========
-async function fetchWithRetry(url, retries=2) {
-  const proxies = [
-    (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`
-  ];
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    for (let pIdx = 0; pIdx < proxies.length; pIdx++) {
+// ========== ROBUST FETCH WITH 3 PROXIES + RETRIES ==========
+const PROXY_LIST = [
+  url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://cors-anywhere.herokuapp.com/${url}`  // fallback, may require demo notice but works
+];
+
+async function fetchArxivWithRetry(arxivUrl, maxAttempts = 3) {
+  let lastError = null;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    for (let proxyIdx = 0; proxyIdx < PROXY_LIST.length; proxyIdx++) {
       try {
+        const proxyUrl = PROXY_LIST[proxyIdx](arxivUrl);
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-        const proxyUrl = proxies[pIdx](url);
+        const timeoutId = setTimeout(() => controller.abort(), 14000);
         const res = await fetch(proxyUrl, { signal: controller.signal });
         clearTimeout(timeoutId);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const text = await res.text();
-        if (text.trim().startsWith('<?xml') || text.includes('<feed')) {
+        // validate XML
+        if (text.includes('<feed') && (text.includes('entry') || text.includes('<entry'))) {
+          return new DOMParser().parseFromString(text, 'text/xml');
+        } else if (text.includes('<?xml') && text.includes('arxiv')) {
           return new DOMParser().parseFromString(text, 'text/xml');
         } else {
           throw new Error('Invalid XML response');
         }
       } catch (err) {
-        console.warn(`Proxy ${pIdx} attempt ${attempt} failed:`, err);
-        if (attempt === retries && pIdx === proxies.length-1) throw new Error(`CORS/network error after retries`);
-        await new Promise(r => setTimeout(r, 500 * (attempt+1)));
+        lastError = err;
+        console.warn(`Proxy ${proxyIdx} attempt ${attempt} failed:`, err);
+        await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
       }
     }
   }
-  throw new Error('Unable to fetch from arXiv');
+  throw new Error(`Network/CORS issue after multiple tries. ${lastError?.message || ''}`);
 }
 
+// Parse entry
 function parsePaperEntry(entry, forcedCat=null) {
   const title = entry.querySelector('title')?.textContent?.replace(/\s+/g,' ').trim() || 'Untitled';
   const summary = entry.querySelector('summary')?.textContent?.replace(/\s+/g,' ').trim() || '';
@@ -204,18 +174,18 @@ function parsePaperEntry(entry, forcedCat=null) {
   return { id, title, summary, authors, cat:category, catLabel:catObj.label, pub:published, url:`https://arxiv.org/abs/${id}` };
 }
 
-// fetch random paper from a category with variable offset
+// fetch random paper from category
 async function fetchRandomPaper(catId, seedOffset=null) {
-  const offset = (seedOffset !== null ? seedOffset : Math.floor(Math.random() * 4000)) % 3500;
-  const url = `https://export.arxiv.org/api/query?search_query=cat:${catId}&start=${offset}&max_results=15&sortBy=submittedDate&sortOrder=descending`;
-  const xml = await fetchWithRetry(url);
+  const offset = (seedOffset !== null ? seedOffset : Math.floor(Math.random() * 3800)) % 3500;
+  const url = `https://export.arxiv.org/api/query?search_query=cat:${catId}&start=${offset}&max_results=12&sortBy=submittedDate&sortOrder=descending`;
+  const xml = await fetchArxivWithRetry(url);
   const entries = [...xml.querySelectorAll('entry')];
   if(!entries.length) throw new Error(`No papers in ${catId}`);
   const pick = Math.floor(Math.random() * entries.length);
   return parsePaperEntry(entries[pick], catId);
 }
 
-// deterministic daily seed + optional random override
+// deterministic daily seed
 function todaySeed() { const d=new Date(); return d.getFullYear()*366 + (d.getMonth()+1)*32 + d.getDate(); }
 
 async function loadTodayPaper(randomMode=false, specificCat=null) {
@@ -234,7 +204,7 @@ async function loadTodayPaper(randomMode=false, specificCat=null) {
     const seedOffset = randomMode ? Math.floor(Math.random()*6000) : (todaySeed() * 13) % 5000;
     const paper = await fetchRandomPaper(cat, seedOffset);
     currentPaper = paper;
-    // add to history (avoid duplicate today)
+    // history
     history = history.filter(h => !(h.date === todayStr() && h.paper.id === paper.id));
     history.unshift({ date: todayStr(), paper: paper });
     if(history.length > 280) history = history.slice(0,280);
@@ -245,8 +215,9 @@ async function loadTodayPaper(randomMode=false, specificCat=null) {
   } catch(err) {
     loading.style.display = 'none';
     errorDiv.style.display = 'block';
-    errorDiv.innerHTML = `⚠️ ${err.message}<br><button class="btn-refresh" id="manual-retry" style="margin-top:12px;">Retry now</button>`;
-    document.getElementById('manual-retry')?.addEventListener('click', ()=>loadTodayPaper(randomMode, specificCat), {once:true});
+    errorDiv.innerHTML = `⚠️ ${err.message}<br><button class="btn-refresh" id="manual-retry-now" style="margin-top:12px;">⟳ Retry now</button>`;
+    const retryBtn = document.getElementById('manual-retry-now');
+    if(retryBtn) retryBtn.onclick = () => loadTodayPaper(randomMode, specificCat);
   }
 }
 
@@ -321,7 +292,7 @@ function bindMiniCardEvents(container, getPaperById, onLikeToggle) {
   });
 }
 
-// ========== RECOMMENDATIONS (robust keyword extraction + query) ==========
+// ========== RECOMMENDATIONS ==========
 function extractKeywords(papers) {
   const freq={};
   const text = papers.map(p=>(p.title+' '+p.summary).toLowerCase()).join(' ');
@@ -351,7 +322,7 @@ async function generateRecommendations() {
   const query = keywords.slice(0,3).map(k=>`all:${k}`).join('+AND+');
   const url = `https://export.arxiv.org/api/query?search_query=${query}&start=0&max_results=30&sortBy=relevance`;
   try {
-    const xml = await fetchWithRetry(url);
+    const xml = await fetchArxivWithRetry(url);
     const entries = [...xml.querySelectorAll('entry')];
     if(!entries.length) throw new Error('No recommendations found.');
     const seenIds = new Set([...(currentPaper?[currentPaper.id]:[]), ...liked.map(p=>p.id)]);
