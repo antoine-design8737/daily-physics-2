@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Daily Physics — resilient arXiv reader</title>
+<meta name="theme-color" content="#0a0a0f">
+<title>Daily Physics — precise categories</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -73,7 +74,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
   <div class="page active" id="page-today">
     <div class="page-header"><div class="logo"><span class="logo-dot"></span>Daily Physics</div><div class="date-chip" id="date-chip"></div></div>
     <div class="cat-scroll" id="cat-scroll"></div>
-    <div class="state-loading" id="today-loading"><div class="spinner"></div><span>Connecting to arXiv...</span></div>
+    <div class="state-loading" id="today-loading"><div class="spinner"></div><span>Searching OpenAlex...</span></div>
     <div class="state-error" id="today-error"></div>
     <div id="today-paper" style="display:none">
       <div class="paper-card fade-in">
@@ -82,14 +83,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
         <p class="paper-authors" id="t-authors"></p><div class="divider"></div>
         <p class="paper-abstract" id="t-abstract"></p>
         <div class="action-row"><a class="btn-read" id="t-link" target="_blank">📄 Read</a><button class="btn-like" id="t-like">♡</button></div>
-        <div class="stats-row"><div class="stat-box"><div class="stat-label">arXiv ID</div><div class="stat-value" id="t-id"></div></div><div class="stat-box"><div class="stat-label">Field</div><div class="stat-value" id="t-field"></div></div></div>
+        <div class="stats-row"><div class="stat-box"><div class="stat-label">DOI / ID</div><div class="stat-value" id="t-id"></div></div><div class="stat-box"><div class="stat-label">Source</div><div class="stat-value" id="t-field">OpenAlex</div></div></div>
       </div>
       <div class="refresh-row"><button class="btn-refresh" id="refresh-btn">⟳ Random paper</button></div>
     </div>
   </div>
   <div class="page" id="page-liked"><div class="page-header"><div class="page-title">Liked</div><button class="btn-refresh" id="liked-clear">Clear all</button></div><div id="liked-list"></div></div>
   <div class="page" id="page-history"><div class="page-header"><div class="page-title">History</div></div><div id="history-list"></div></div>
-  <div class="page" id="page-rec"><div class="page-header"><div class="page-title">For You</div></div><p class="rec-hint" id="rec-hint"></p><button class="btn-rec-load" id="rec-load-btn">✨ Generate recommendations</button><div class="state-loading" id="rec-loading" style="display:none"><div class="spinner"></div><span>Searching arXiv...</span></div><div class="state-error" id="rec-error"></div><div id="rec-list"></div></div>
+  <div class="page" id="page-rec"><div class="page-header"><div class="page-title">For You</div></div><p class="rec-hint" id="rec-hint"></p><button class="btn-rec-load" id="rec-load-btn">✨ Generate recommendations</button><div class="state-loading" id="rec-loading" style="display:none"><div class="spinner"></div><span>Searching OpenAlex...</span></div><div class="state-error" id="rec-error"></div><div id="rec-list"></div></div>
 </div>
 <nav id="nav">
   <button class="nav-btn active" data-page="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Today</span></button>
@@ -98,146 +99,217 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:
   <button class="nav-btn" data-page="rec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span>For You</span></button>
 </nav>
 <script>
-// ========== STORAGE & HELPERS ==========
-let liked = JSON.parse(localStorage.getItem('liked_v4') || '[]');
-let history = JSON.parse(localStorage.getItem('history_v4') || '[]');
+// ========== STORAGE ==========
+let liked = JSON.parse(localStorage.getItem('liked_v8') || '[]');
+let history = JSON.parse(localStorage.getItem('history_v8') || '[]');
 let currentPaper = null;
 let activeCat = null;
 
+// ========== CATEGORIES with high-precision keyword searches ==========
+// Each category has a search query (sent to OpenAlex) and a list of strong keywords 
+// that MUST appear in the title (or abstract as fallback) for the paper to be accepted.
 const CATEGORIES = [
-  {id:'quant-ph', label:'Quantum'},{id:'hep-th', label:'HEP Theory'},{id:'astro-ph', label:'Astrophysics'},
-  {id:'cond-mat', label:'Condensed Matter'},{id:'gr-qc', label:'Gravity'},{id:'hep-ph', label:'Particle Physics'},
-  {id:'math-ph', label:'Math-Phys'},{id:'nucl-th', label:'Nuclear'}
+  { 
+    id: 'quantum', 
+    label: 'Quantum', 
+    searchQuery: 'quantum mechanics OR quantum computing OR quantum information OR entanglement OR qubit',
+    keywords: ['quantum', 'qubit', 'entanglement', 'superposition', 'decoherence', 'quantum gate', 'quantum circuit', 'bell inequality', 'quantum algorithm']
+  },
+  { 
+    id: 'hep-th', 
+    label: 'HEP Theory', 
+    searchQuery: 'string theory OR quantum field theory OR conformal field theory OR supersymmetry OR gauge theory OR ads/cft',
+    keywords: ['string theory', 'quantum field', 'conformal field', 'supersymmetry', 'gauge theory', 'ads/cft', 'brane', 'supergravity', 'yang-mills']
+  },
+  { 
+    id: 'astro-ph', 
+    label: 'Astrophysics', 
+    searchQuery: 'astrophysics OR cosmology OR galaxy formation OR dark matter OR gravitational waves OR black hole',
+    keywords: ['galaxy', 'cosmology', 'dark matter', 'black hole', 'supernova', 'neutron star', 'gravitational wave', 'cmb', 'redshift']
+  },
+  { 
+    id: 'cond-mat', 
+    label: 'Condensed Matter', 
+    searchQuery: 'condensed matter physics OR superconductivity OR topological insulator OR graphene OR quantum hall',
+    keywords: ['superconductivity', 'topological insulator', 'graphene', 'quantum hall', 'magnetic', 'fermion', 'boson', 'landau', 'fermi liquid']
+  },
+  { 
+    id: 'gr-qc', 
+    label: 'Gravity', 
+    searchQuery: 'general relativity OR gravitational waves OR black hole physics OR spacetime OR modified gravity',
+    keywords: ['general relativity', 'gravitational wave', 'black hole', 'spacetime', 'singularity', 'einstein', 'horizon', 'wormhole']
+  },
+  { 
+    id: 'hep-ph', 
+    label: 'Particles', 
+    searchQuery: 'particle physics OR collider physics OR neutrino physics OR higgs boson OR dark matter particle',
+    keywords: ['collider', 'neutrino', 'higgs', 'quark', 'lepton', 'particle physics', 'lhc', 'tev', 'decay', 'cross section', 'dark matter particle']
+  },
+  { 
+    id: 'math-ph', 
+    label: 'Math-Phys', 
+    searchQuery: 'mathematical physics OR operator algebra OR hilbert space OR functional analysis OR quantum groups',
+    keywords: ['mathematical physics', 'hilbert space', 'operator algebra', 'functional analysis', 'quantum group', 'c* algebra', 'spectral theory']
+  },
+  { 
+    id: 'nucl-th', 
+    label: 'Nuclear', 
+    searchQuery: 'nuclear physics OR nuclear structure OR nuclear reaction OR neutron star OR quark-gluon plasma',
+    keywords: ['nuclear physics', 'nucleus', 'neutron', 'proton', 'fusion', 'fission', 'isotope', 'quark-gluon', 'nuclear matter']
+  }
 ];
-const STOPWORDS = new Set("the a an of in for on with to from by is are be this that we our their these which and or not as at it its via over under into has have been was were all also can both such than more two one three new low high large small using based show shows model models study studies effect effects approach method".split(' '));
 
-function saveLiked() { localStorage.setItem('liked_v4', JSON.stringify(liked)); updateBadge(); }
-function saveHistory() { localStorage.setItem('history_v4', JSON.stringify(history)); }
-function updateBadge() { const b = document.getElementById('liked-badge'); if(liked.length) { b.style.display='block'; b.textContent=liked.length>99?'99+':liked.length; } else b.style.display='none'; }
-function isLiked(id) { return liked.some(p=>p.id===id); }
-function toggleLike(paper) { if(isLiked(paper.id)) liked = liked.filter(p=>p.id!==paper.id); else { liked.unshift(paper); if(liked.length>200) liked=liked.slice(0,200); } saveLiked(); return isLiked(paper.id); }
-function todayStr() { return new Date().toISOString().slice(0,10); }
-function fmtDate(str) { const t=todayStr(); const yest=new Date(Date.now()-86400000).toISOString().slice(0,10); if(str===t) return 'Today'; if(str===yest) return 'Yesterday'; return new Date(str).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}); }
+// Helper: convert OpenAlex inverted abstract to plain text
+function invertedToText(inv) {
+  if (!inv) return '';
+  const words = Object.entries(inv).sort((a,b) => a[1][0] - b[1][0]);
+  return words.map(([word]) => word).join(' ');
+}
 
-// ========== ROBUST FETCH WITH 3 PROXIES + RETRIES ==========
-const PROXY_LIST = [
-  url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  url => `https://cors-anywhere.herokuapp.com/${url}`  // fallback, may require demo notice but works
-];
+// Fetch from OpenAlex (CORS friendly)
+async function fetchOpenAlex(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
 
-async function fetchArxivWithRetry(arxivUrl, maxAttempts = 3) {
-  let lastError = null;
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    for (let proxyIdx = 0; proxyIdx < PROXY_LIST.length; proxyIdx++) {
-      try {
-        const proxyUrl = PROXY_LIST[proxyIdx](arxivUrl);
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 14000);
-        const res = await fetch(proxyUrl, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const text = await res.text();
-        // validate XML
-        if (text.includes('<feed') && (text.includes('entry') || text.includes('<entry'))) {
-          return new DOMParser().parseFromString(text, 'text/xml');
-        } else if (text.includes('<?xml') && text.includes('arxiv')) {
-          return new DOMParser().parseFromString(text, 'text/xml');
-        } else {
-          throw new Error('Invalid XML response');
-        }
-      } catch (err) {
-        lastError = err;
-        console.warn(`Proxy ${proxyIdx} attempt ${attempt} failed:`, err);
-        await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
-      }
+// Parse OpenAlex work
+function parseOpenAlexWork(work, categoryLabel = 'Physics') {
+  const title = work.title || 'Untitled';
+  let abstract = '';
+  if (work.abstract_inverted_index) abstract = invertedToText(work.abstract_inverted_index);
+  else if (work.abstract) abstract = work.abstract;
+  const authors = (work.authorships || []).map(a => a.author.display_name).join(', ');
+  const doi = work.doi ? work.doi.replace('https://doi.org/', '') : null;
+  const paperId = doi || work.id.split('/').pop();
+  const pubDate = work.publication_date ? work.publication_date.slice(0,10) : '';
+  let url = '#';
+  if (work.primary_location?.pdf_url) url = work.primary_location.pdf_url;
+  else if (work.doi) url = work.doi;
+  else url = work.id;
+  return {
+    id: paperId,
+    title: title,
+    summary: abstract.length > 800 ? abstract.slice(0,800)+'…' : abstract,
+    authors: authors,
+    cat: categoryLabel,
+    catLabel: categoryLabel,
+    pub: pubDate,
+    url: url,
+    raw: work
+  };
+}
+
+// Strict validation: title MUST contain at least one keyword from the category list
+function matchesCategoryStrict(paper, category) {
+  const titleLower = paper.title.toLowerCase();
+  const abstractLower = paper.summary.toLowerCase();
+  // Require at least one keyword in title (more reliable than abstract)
+  const hasKeyword = category.keywords.some(kw => titleLower.includes(kw.toLowerCase()));
+  // If no keyword in title, check abstract as fallback (but still strict)
+  const hasKeywordInAbstract = category.keywords.some(kw => abstractLower.includes(kw.toLowerCase()));
+  return hasKeyword || hasKeywordInAbstract;
+}
+
+// Fetch a paper that strictly matches the category (with many retries)
+async function fetchValidCategoryPaper(category, attempt = 0) {
+  const maxAttempts = 8;
+  const maxPage = 200;
+  // Use a random page to get diverse results
+  const page = Math.floor(Math.random() * maxPage) + 1;
+  
+  // Build a search query: use the category's searchQuery + open access filter
+  // Adding "open_access.is_oa:true" ensures we get free PDFs
+  const url = `https://api.openalex.org/works?search=${encodeURIComponent(category.searchQuery)}&filter=open_access.is_oa:true&sort=relevance_score:desc&page=${page}&per-page=25`;
+  
+  const data = await fetchOpenAlex(url);
+  if (!data.results || data.results.length === 0) {
+    if (attempt < maxAttempts) {
+      return fetchValidCategoryPaper(category, attempt + 1);
     }
+    throw new Error(`No papers found for ${category.label} after multiple attempts`);
   }
-  throw new Error(`Network/CORS issue after multiple tries. ${lastError?.message || ''}`);
-}
-
-// Parse entry
-function parsePaperEntry(entry, forcedCat=null) {
-  const title = entry.querySelector('title')?.textContent?.replace(/\s+/g,' ').trim() || 'Untitled';
-  const summary = entry.querySelector('summary')?.textContent?.replace(/\s+/g,' ').trim() || '';
-  const authors = [...entry.querySelectorAll('author name')].map(a=>a.textContent).join(', ');
-  let idRaw = entry.querySelector('id')?.textContent || '';
-  const id = idRaw.split('/abs/')[1] || idRaw.split('/').pop();
-  const published = entry.querySelector('published')?.textContent?.slice(0,10) || '';
-  let category = forcedCat;
-  if(!category) {
-    const primary = entry.querySelector('arxiv\\:primary_category') || entry.querySelector('primary_category');
-    if(primary) category = primary.getAttribute('term');
-    else category = entry.querySelector('category')?.getAttribute('term') || 'physics';
+  
+  // Filter papers that strictly match the category keywords
+  const candidates = data.results
+    .map(w => parseOpenAlexWork(w, category.label))
+    .filter(p => matchesCategoryStrict(p, category));
+  
+  if (candidates.length > 0) {
+    const randomIndex = Math.floor(Math.random() * candidates.length);
+    return candidates[randomIndex];
   }
-  const catObj = CATEGORIES.find(c=>c.id===category) || {id:category, label:category.toUpperCase()};
-  return { id, title, summary, authors, cat:category, catLabel:catObj.label, pub:published, url:`https://arxiv.org/abs/${id}` };
+  
+  // If no strict match and we have retries left, try again with a different page/seed
+  if (attempt < maxAttempts) {
+    // Slight delay to avoid hammering
+    await new Promise(r => setTimeout(r, 200));
+    return fetchValidCategoryPaper(category, attempt + 1);
+  }
+  
+  // Last resort: take the most relevant result from the API even if keywords are weak
+  console.warn(`Could not find strict match for ${category.label} after ${maxAttempts} attempts, returning best available`);
+  return parseOpenAlexWork(data.results[0], category.label);
 }
 
-// fetch random paper from category
-async function fetchRandomPaper(catId, seedOffset=null) {
-  const offset = (seedOffset !== null ? seedOffset : Math.floor(Math.random() * 3800)) % 3500;
-  const url = `https://export.arxiv.org/api/query?search_query=cat:${catId}&start=${offset}&max_results=12&sortBy=submittedDate&sortOrder=descending`;
-  const xml = await fetchArxivWithRetry(url);
-  const entries = [...xml.querySelectorAll('entry')];
-  if(!entries.length) throw new Error(`No papers in ${catId}`);
-  const pick = Math.floor(Math.random() * entries.length);
-  return parsePaperEntry(entries[pick], catId);
-}
+// Daily deterministic seed (just for which category to pick on first load)
+function todaySeed() { const d = new Date(); return d.getFullYear()*366 + (d.getMonth()+1)*32 + d.getDate(); }
+function todayStr() { return new Date().toISOString().slice(0,10); }
 
-// deterministic daily seed
-function todaySeed() { const d=new Date(); return d.getFullYear()*366 + (d.getMonth()+1)*32 + d.getDate(); }
-
-async function loadTodayPaper(randomMode=false, specificCat=null) {
-  const loading = document.getElementById('today-loading');
+async function loadTodayPaper(randomMode = false, specificCat = null) {
+  const loadingDiv = document.getElementById('today-loading');
   const errorDiv = document.getElementById('today-error');
   const paperDiv = document.getElementById('today-paper');
-  loading.style.display = 'flex';
+  loadingDiv.style.display = 'flex';
   errorDiv.style.display = 'none';
   paperDiv.style.display = 'none';
   try {
-    let cat = specificCat || activeCat;
-    if(!cat) {
+    let catId = specificCat || activeCat;
+    if (!catId) {
       const idx = randomMode ? Math.floor(Math.random()*CATEGORIES.length) : (todaySeed() % CATEGORIES.length);
-      cat = CATEGORIES[idx].id;
+      catId = CATEGORIES[idx].id;
     }
-    const seedOffset = randomMode ? Math.floor(Math.random()*6000) : (todaySeed() * 13) % 5000;
-    const paper = await fetchRandomPaper(cat, seedOffset);
+    const category = CATEGORIES.find(c => c.id === catId);
+    if (!category) throw new Error('Unknown category');
+    const paper = await fetchValidCategoryPaper(category);
     currentPaper = paper;
-    // history
-    history = history.filter(h => !(h.date === todayStr() && h.paper.id === paper.id));
-    history.unshift({ date: todayStr(), paper: paper });
-    if(history.length > 280) history = history.slice(0,280);
+    // History
+    const today = todayStr();
+    history = history.filter(h => !(h.date === today && h.paper.id === paper.id));
+    history.unshift({ date: today, paper: paper });
+    if (history.length > 280) history = history.slice(0,280);
     saveHistory();
     renderTodayUI(paper);
-    loading.style.display = 'none';
+    loadingDiv.style.display = 'none';
     paperDiv.style.display = 'block';
-  } catch(err) {
-    loading.style.display = 'none';
+  } catch (err) {
+    loadingDiv.style.display = 'none';
     errorDiv.style.display = 'block';
-    errorDiv.innerHTML = `⚠️ ${err.message}<br><button class="btn-refresh" id="manual-retry-now" style="margin-top:12px;">⟳ Retry now</button>`;
-    const retryBtn = document.getElementById('manual-retry-now');
-    if(retryBtn) retryBtn.onclick = () => loadTodayPaper(randomMode, specificCat);
+    errorDiv.innerHTML = `⚠️ ${err.message}<br><button class="btn-refresh" id="manual-retry" style="margin-top:12px;">⟳ Retry now</button>`;
+    const retryBtn = document.getElementById('manual-retry');
+    if (retryBtn) retryBtn.onclick = () => loadTodayPaper(randomMode, specificCat);
   }
 }
 
 function renderTodayUI(p) {
   document.getElementById('t-badge').textContent = p.cat;
-  document.getElementById('t-date').textContent = p.pub ? `submitted ${p.pub}` : '';
+  document.getElementById('t-date').textContent = p.pub ? `published ${p.pub}` : '';
   document.getElementById('t-title').textContent = p.title;
-  document.getElementById('t-authors').textContent = p.authors.length>140 ? p.authors.slice(0,140)+'…' : p.authors;
-  document.getElementById('t-abstract').textContent = p.summary.length>720 ? p.summary.slice(0,720)+'…' : p.summary;
+  document.getElementById('t-authors').textContent = p.authors.length > 140 ? p.authors.slice(0,140)+'…' : p.authors;
+  document.getElementById('t-abstract').textContent = p.summary;
   document.getElementById('t-link').href = p.url;
   document.getElementById('t-id').textContent = p.id;
-  document.getElementById('t-field').textContent = p.catLabel;
   const likeBtn = document.getElementById('t-like');
   const likedState = isLiked(p.id);
   likeBtn.classList.toggle('liked', likedState);
   likeBtn.textContent = likedState ? '❤️' : '♡';
 }
-// Toggle like from today
-document.getElementById('t-like').onclick = () => { if(currentPaper) { toggleLike(currentPaper); renderTodayUI(currentPaper); renderLikedList(); renderHistoryList(); } };
-document.getElementById('refresh-btn').onclick = () => loadTodayPaper(true, activeCat);
+
+function saveLiked() { localStorage.setItem('liked_v8', JSON.stringify(liked)); updateBadge(); }
+function saveHistory() { localStorage.setItem('history_v8', JSON.stringify(history)); }
+function updateBadge() { const b = document.getElementById('liked-badge'); if(liked.length) { b.style.display='block'; b.textContent=liked.length>99?'99+':liked.length; } else b.style.display='none'; }
+function isLiked(id) { return liked.some(p=>p.id===id); }
+function toggleLike(paper) { if(isLiked(paper.id)) liked = liked.filter(p=>p.id!==paper.id); else { liked.unshift(paper); if(liked.length>200) liked=liked.slice(0,200); } saveLiked(); return isLiked(paper.id); }
 
 // Category bar
 const strip = document.getElementById('cat-scroll');
@@ -254,6 +326,8 @@ CATEGORIES.forEach(cat => {
   strip.appendChild(btn);
 });
 document.getElementById('date-chip').innerText = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+document.getElementById('refresh-btn').onclick = () => loadTodayPaper(true, activeCat);
+document.getElementById('t-like').onclick = () => { if(currentPaper) { toggleLike(currentPaper); renderTodayUI(currentPaper); renderLikedList(); renderHistoryList(); } };
 
 // ========== LIKED PAGE ==========
 function renderLikedList() {
@@ -279,9 +353,10 @@ function renderHistoryList() {
     if(paper) { toggleLike(paper); renderHistoryList(); renderLikedList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); }
   });
 }
+function fmtDate(str) { const t=todayStr(); const yest=new Date(Date.now()-86400000).toISOString().slice(0,10); if(str===t) return 'Today'; if(str===yest) return 'Yesterday'; return new Date(str).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}); }
 
 function miniCardHTML(p, likedState) {
-  return `<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat||'arxiv'}</div><div class="mini-title">${p.title.slice(0,85)}${p.title.length>85?'…':''}</div><div class="mini-authors">${p.authors.slice(0,65)}${p.authors.length>65?'…':''}</div><div class="mini-row"><span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.id}</span><button class="mini-like ${likedState?'liked':''}" data-id="${p.id}">${likedState?'❤️':'♡'}</button></div></button>`;
+  return `<button class="mini-card" data-id="${p.id}"><div class="mini-badge">${p.cat||'physics'}</div><div class="mini-title">${p.title.slice(0,85)}${p.title.length>85?'…':''}</div><div class="mini-authors">${p.authors.slice(0,65)}${p.authors.length>65?'…':''}</div><div class="mini-row"><span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.id.slice(0,20)}</span><button class="mini-like ${likedState?'liked':''}" data-id="${p.id}">${likedState?'❤️':'♡'}</button></div></button>`;
 }
 function bindMiniCardEvents(container, getPaperById, onLikeToggle) {
   container.querySelectorAll('.mini-card').forEach(card => {
@@ -293,11 +368,13 @@ function bindMiniCardEvents(container, getPaperById, onLikeToggle) {
 }
 
 // ========== RECOMMENDATIONS ==========
+const STOPWORDS = new Set("the a an of in for on with to from by is are be this that we our their these which and or not as at it its via over under into has have been was were all also can both such than more two one three new low high large small using based show shows model models study studies effect effects approach method".split(' '));
+
 function extractKeywords(papers) {
-  const freq={};
-  const text = papers.map(p=>(p.title+' '+p.summary).toLowerCase()).join(' ');
+  const freq = {};
+  const text = papers.map(p => (p.title + ' ' + p.summary).toLowerCase()).join(' ');
   const words = text.match(/\b[a-z]{4,}\b/g) || [];
-  words.forEach(w=>{ if(!STOPWORDS.has(w) && !w.match(/^\d/)) freq[w]=(freq[w]||0)+1; });
+  words.forEach(w => { if(!STOPWORDS.has(w) && !w.match(/^\d/)) freq[w] = (freq[w]||0)+1; });
   return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
 }
 
@@ -313,22 +390,21 @@ async function generateRecommendations() {
   const seedPapers = [];
   if(currentPaper) seedPapers.push(currentPaper);
   seedPapers.push(...liked.slice(0,5));
-  if(seedPapers.length===0) {
+  if(seedPapers.length === 0) {
     errorDiv.style.display='block'; errorDiv.textContent='⚠ Like a few papers first or open today’s paper to get recommendations.';
     loading.style.display='none'; btn.style.display='flex'; return;
   }
   const keywords = extractKeywords(seedPapers);
-  if(keywords.length===0) { errorDiv.style.display='block'; errorDiv.textContent='Not enough keywords, try liking more diverse papers.'; loading.style.display='none'; btn.style.display='flex'; return; }
-  const query = keywords.slice(0,3).map(k=>`all:${k}`).join('+AND+');
-  const url = `https://export.arxiv.org/api/query?search_query=${query}&start=0&max_results=30&sortBy=relevance`;
+  if(keywords.length === 0) { errorDiv.style.display='block'; errorDiv.textContent='Not enough keywords, try liking more diverse papers.'; loading.style.display='none'; btn.style.display='flex'; return; }
+  const searchQuery = keywords.slice(0,3).join(' ');
+  const url = `https://api.openalex.org/works?search=${encodeURIComponent(searchQuery)}&filter=open_access.is_oa:true&sort=relevance_score:desc&per-page=20`;
   try {
-    const xml = await fetchArxivWithRetry(url);
-    const entries = [...xml.querySelectorAll('entry')];
-    if(!entries.length) throw new Error('No recommendations found.');
+    const data = await fetchOpenAlex(url);
+    if (!data.results || data.results.length === 0) throw new Error('No recommendations found.');
     const seenIds = new Set([...(currentPaper?[currentPaper.id]:[]), ...liked.map(p=>p.id)]);
-    let recPapers = entries.map(entry=>parsePaperEntry(entry)).filter(p=>!seenIds.has(p.id)).slice(0,12);
-    if(recPapers.length===0) throw new Error('All found papers already in liked/history.');
-    recList.innerHTML = recPapers.map(p=>miniCardHTML(p, isLiked(p.id))).join('');
+    let recPapers = data.results.map(w => parseOpenAlexWork(w, 'Recommendation')).filter(p => !seenIds.has(p.id)).slice(0,12);
+    if(recPapers.length === 0) throw new Error('All found papers already in liked/history.');
+    recList.innerHTML = recPapers.map(p => miniCardHTML(p, isLiked(p.id))).join('');
     bindMiniCardEvents(recList, (id)=>recPapers.find(p=>p.id===id), (id)=>{
       const paper = recPapers.find(p=>p.id===id);
       if(paper) { toggleLike(paper); renderLikedList(); if(currentPaper?.id===paper.id) renderTodayUI(currentPaper); renderHistoryList(); const newState = isLiked(paper.id); const likeBtn = recList.querySelector(`.mini-like[data-id="${id}"]`); if(likeBtn) { likeBtn.classList.toggle('liked',newState); likeBtn.textContent = newState?'❤️':'♡'; } }
